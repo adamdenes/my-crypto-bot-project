@@ -41,6 +41,10 @@ class Client {
         return crypto.createHmac('sha256', this.apiSecret).update('timestamp=' + query).digest('hex');
     }
 
+    offset(server, date) {
+        return server - date;
+    }
+
     async checkServerTime() {
         try {
             const response = await fetch(base + 'api/v3/time');
@@ -80,41 +84,37 @@ class Client {
         }
     }
 
-    offset(server, date) {
-        return server - date;
+    async getAccountInfo() {
+        try {
+            const serverTime = await this.serverTime;
+            const currentTime = new Date().getTime();
+            const offset = this.offset(serverTime, currentTime);
+            const useServerTime = offset < 0 ? serverTime - offset : serverTime + offset;
+            const signature = this.signature(useServerTime);
+            
+            const response = await fetch(base + 'api/v3/account' + '?' + 'timestamp=' + useServerTime + '&signature=' + signature, {
+                method: 'GET',
+                headers: {
+                    'X-MBX-APIKEY': this.apiKey,
+                    'Content-type': 'x-www-form-urlencoded'
+                }
+            });
+            const jsonResponse = await response.json();
+            
+            if (response.ok) {
+                console.log(jsonResponse)
+                return jsonResponse;
+            }
+            throw new Error('Request failed!');
+        } catch (error) {
+            console.log(error);
+        }
     }
 }
 
 const client = new Client(config.apiKey, config.apiSecret);
+client.getAccountInfo();
 
-async function getAccountInfo() {
-    try {
-        const serverTime = await client.serverTime;
-        const currentTime = new Date().getTime();
-        const offset = client.offset(serverTime, currentTime);
-        const useServerTime = offset < 0 ? serverTime - offset : serverTime + offset;
-        const signature = client.signature(useServerTime);
-        
-        const response = await fetch(base + 'api/v3/account' + '?' + 'timestamp=' + useServerTime + '&signature=' + signature, {
-            method: 'GET',
-            headers: {
-                'X-MBX-APIKEY': client.apiKey,
-                'Content-type': 'x-www-form-urlencoded'
-            }
-        });
-        const jsonResponse = await response.json();
-        
-        if (response.ok) {
-            console.log(jsonResponse)
-            return jsonResponse;
-        }
-        throw new Error('Request failed!');
-    } catch (error) {
-        console.log(error);
-    }
-}
-
-getAccountInfo();
 
 const operation = {
     _BUY: 0,
