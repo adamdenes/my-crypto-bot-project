@@ -1,10 +1,9 @@
-const config = require('./config.json');
-const helper = require('./helper.js');
-const fetch = require('node-fetch');
-const crypto = require('crypto');
+const config = require("./config.json");
+const helper = require("./helper.js");
+const fetch = require("node-fetch");
+const crypto = require("crypto");
 
-const base = 'https://api.binance.com/';
-
+const base = "https://api.binance.com/";
 
 class Client {
     constructor(apiKey, apiSecret) {
@@ -38,7 +37,10 @@ class Client {
     }
 
     signature(query) {
-        return crypto.createHmac('sha256', this.apiSecret).update('timestamp=' + query).digest('hex');
+        return crypto
+            .createHmac("sha256", this.apiSecret)
+            .update("timestamp=" + query)
+            .digest("hex");
     }
 
     offset(server, date) {
@@ -47,19 +49,36 @@ class Client {
 
     async getRequest(endpoint, data = {}) {
         try {
-            const response = await fetch(endpoint, data = {});
-            console.log(response)
+            const response = await fetch(endpoint, data);
+            // console.log(response);
             if (response.ok) {
                 const jsonResponse = await response.json();
                 return jsonResponse;
             }
-            throw new Error('Request failed!');
+            throw new Error("Request failed!");
         } catch (error) {
             console.log(error);
         }
     }
 
-    async checkServerTime() {
+    async postRequest(endpoint, data) {
+        try {
+            const response = await fetch(endpoint, {
+                method: "POST",
+                body: data,
+            });
+            console.log(response);
+            if (response.ok) {
+                const jsonResponse = await response.json();
+                return jsonResponse;
+            }
+            throw new Error("Request failed!");
+        } catch (error) {
+            console.log(error);
+        }
+    }
+
+    async getServerTime() {
         const response = await this.getRequest(`${base}api/v3/time`);
         return response.serverTime;
     }
@@ -78,28 +97,32 @@ class Client {
         const serverTime = await server;
         const currentTime = new Date().getTime();
         const offset = this.offset(serverTime, currentTime);
-        const useServerTime = offset < 0 ? serverTime - offset : serverTime + offset;
+        const useServerTime =
+            offset < 0 ? serverTime - offset : serverTime + offset;
         return useServerTime;
     }
 
     async getAccountInfo() {
         try {
-            const serverTime = await this.adjustTimestamp(this.checkServerTime());
+            const serverTime = await this.adjustTimestamp(this.getServerTime());
             const signature = this.signature(serverTime);
 
-            const response = await fetch(`${base}api/v3/account?timestamp=${serverTime}&signature=${signature}`, {
-                method: 'GET',
-                headers: {
-                    'X-MBX-APIKEY': this.apiKey,
-                    'Content-type': 'x-www-form-urlencoded'
+            const response = await fetch(
+                `${base}api/v3/account?timestamp=${serverTime}&signature=${signature}`,
+                {
+                    method: "GET",
+                    headers: {
+                        "X-MBX-APIKEY": this.apiKey,
+                        "Content-type": "x-www-form-urlencoded",
+                    },
                 }
-            });
+            );
 
             if (response.ok) {
                 const jsonResponse = await response.json();
                 return jsonResponse;
             }
-            throw new Error('Request failed!');
+            throw new Error("Request failed!");
         } catch (error) {
             console.log(error);
         }
@@ -108,29 +131,40 @@ class Client {
     async getBalances() {
         const data = await this.getAccountInfo();
         const balances = data.balances
-            .map(asset => asset)
-            .filter(value => +value.free > 0);
+            .map((asset) => asset)
+            .filter((value) => +value.free > 0);
         return balances;
     }
 
-    async getMarketPrice(symbol = 'ETHBTC') {
-        const param = typeof symbol === 'string' ? '?symbol=' + symbol : '';
-        const marketPrice = await this.getRequest(`${base}api/v3/ticker/price${param}`);
+    async getMarketPrice(symbol = "ETHBTC") {
+        const param = typeof symbol === "string" ? "?symbol=" + symbol : "";
+        const marketPrice = await this.getRequest(
+            `${base}api/v3/ticker/price${param}`
+        );
         return marketPrice;
+    }
+
+    async placeSellOrder() {
+        // TODO:
+        //  1. Calculate the amount to sell (based on some threshold
+        //     you set e.g. 50% of total balance)
+        //  2. Send a POST request to exchange API to do a SELL operation
+        // RETURN: price at operation execution
     }
 }
 
 const client = new Client(config.apiKey, config.apiSecret);
-client.getMarketPrice().then(mp => console.log(mp));
+client.testNewOrder().then((mp) => console.log(mp));
+// client.getAccountInfo().then((mp) => console.log(mp));
 
 
 const operation = {
     _BUY: 0,
     _SELL: 1,
-    BUY_DIP_THRESHOLD: 0.02,            // buy if price decreased more than TH
-    BUY_UPWARD_TREND_THRESHOLD: 0.02,   // buy if price increased more than TH
-    SELL_PROFIT_THRESHOLD: 0.02,        // sell if price increased above TH
-    SELL_STOP_LOSS_THRESHOLD: 0.02,     // stop loss
+    BUY_DIP_THRESHOLD: 0.02, // buy if price decreased more than TH
+    BUY_UPWARD_TREND_THRESHOLD: 0.02, // buy if price increased more than TH
+    SELL_PROFIT_THRESHOLD: 0.02, // sell if price increased above TH
+    SELL_STOP_LOSS_THRESHOLD: 0.02, // stop loss
 
     get BUY() {
         return this._BUY;
@@ -138,16 +172,7 @@ const operation = {
 
     get SELL() {
         return this._SELL;
-    }
-};
-
-const placeSellOrder = () => {
-    // TODO:
-    //  1. Calculate the amount to sell (based on some threshold
-    //     you set e.g. 50% of total balance)
-    //  2. Send a POST request to exchange API to do a SELL operation
-    // RETURN: price at operation execution
-
+    },
 };
 
 const placeBuyOrder = () => {
@@ -156,11 +181,9 @@ const placeBuyOrder = () => {
     //     you set e.g. 50% of total balance)
     //  2. Send a POST request to exchange API to do a BUY operation
     // RETURN: price at operation execution
-
 };
 
 const getOperationDetails = (operationId) => {
     // TODO: GET request to API for the details of an operation
     // RETURN: details of the operation
-
 };
