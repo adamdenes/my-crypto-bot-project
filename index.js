@@ -91,7 +91,7 @@ class Client {
             const offset = this.offset(serverTime, currentTime);
             const useServerTime = offset < 0 ? serverTime - offset : serverTime + offset;
             const signature = this.signature(useServerTime);
-            
+
             const response = await fetch(base + 'api/v3/account' + '?' + 'timestamp=' + useServerTime + '&signature=' + signature, {
                 method: 'GET',
                 headers: {
@@ -100,9 +100,8 @@ class Client {
                 }
             });
             const jsonResponse = await response.json();
-            
+
             if (response.ok) {
-                console.log(jsonResponse)
                 return jsonResponse;
             }
             throw new Error('Request failed!');
@@ -110,10 +109,18 @@ class Client {
             console.log(error);
         }
     }
+
+    async getBalances() {
+        // TODO: GET request to exchange API for your account's balances
+        const data = await this.getAccountInfo();
+        const balances = data.balances.map(asset => asset).filter(value => +value.free > 0);
+        // RETURN: balances
+        return balances;
+    }
 }
 
 const client = new Client(config.apiKey, config.apiSecret);
-client.getAccountInfo();
+client.getBalances().then(resolve => console.log(resolve));
 
 
 const operation = {
@@ -133,11 +140,6 @@ const operation = {
     }
 };
 
-const getBalances = () => {
-    // TODO: GET request to exchange API for your account's balances
-    // RETURN: balances
-
-};
 
 const getMarketPrice = () => {
     // TODO: GET request to exchange API for current price of the asset
