@@ -45,63 +45,57 @@ class Client {
         return server - date;
     }
 
-    async checkServerTime() {
+    async getRequest(endpoint, data = {}) {
         try {
-            const response = await fetch(base + 'api/v3/time');
+            const response = await fetch(endpoint, data = {});
             if (response.ok) {
                 const jsonResponse = await response.json();
-                return jsonResponse.serverTime;
+                return jsonResponse;
             }
             throw new Error('Request failed!');
         } catch (error) {
             console.log(error);
         }
+    }
+
+    async checkServerTime() {
+        const response = await this.getRequest(base + 'api/v3/time');
+        return response.serverTime;
     }
 
     async exchangeInfo() {
-        try {
-            const response = await fetch(base + 'api/v3/exchangeInfo');
-            if (response.ok) {
-                const jsonResponse = await response.json();
-                return jsonResponse;
-            }
-            throw new Error('Request failed!');
-        } catch (error) {
-            console.log(error);
-        }
+        const response = await this.getRequest(base + 'api/v3/exchangeInfo');
+        return response;
     }
 
     async testConnectivity() {
-        try {
-            const response = await fetch(base + 'api/v3/ping');
-            if (response.ok) {
-                const jsonResponse = await response.json();
-                return jsonResponse;
-            }
-            throw new Error('Request failed!');
-        } catch (error) {
-            console.log(error);
-        }
+        const response = await this.getRequest(base + 'api/v3/ping');
+        return response;
+    }
+
+    async adjustTimestamp(server) {
+        const serverTime = await server;
+        const currentTime = new Date().getTime();
+        const offset = this.offset(serverTime, currentTime);
+        const useServerTime = offset < 0 ? serverTime - offset : serverTime + offset;
+        return useServerTime;
     }
 
     async getAccountInfo() {
         try {
-            const serverTime = await this.serverTime;
-            const currentTime = new Date().getTime();
-            const offset = this.offset(serverTime, currentTime);
-            const useServerTime = offset < 0 ? serverTime - offset : serverTime + offset;
-            const signature = this.signature(useServerTime);
+            const serverTime = await this.adjustTimestamp(this.checkServerTime());
+            const signature = this.signature(serverTime);
 
-            const response = await fetch(base + 'api/v3/account' + '?' + 'timestamp=' + useServerTime + '&signature=' + signature, {
+            const response = await fetch(base + 'api/v3/account' + '?' + 'timestamp=' + serverTime + '&signature=' + signature, {
                 method: 'GET',
                 headers: {
                     'X-MBX-APIKEY': this.apiKey,
                     'Content-type': 'x-www-form-urlencoded'
                 }
             });
-            const jsonResponse = await response.json();
-
+            
             if (response.ok) {
+                const jsonResponse = await response.json();
                 return jsonResponse;
             }
             throw new Error('Request failed!');
@@ -113,14 +107,27 @@ class Client {
     async getBalances() {
         // TODO: GET request to exchange API for your account's balances
         const data = await this.getAccountInfo();
-        const balances = data.balances.map(asset => asset).filter(value => +value.free > 0);
+        const balances = data.balances
+            .map(asset => asset)
+            .filter(value => +value.free > 0);
         // RETURN: balances
         return balances;
+    }
+
+    async getMarketPrice() {
+        // TODO: GET request to exchange API for current price of the asset
+
+        // RETURN: market price
+        return marketPrice;
     }
 }
 
 const client = new Client(config.apiKey, config.apiSecret);
-client.getBalances().then(resolve => console.log(resolve));
+// client.getBalances().then(resolve => console.log(resolve));
+// client.checkServerTime().then(serverTime => console.log(serverTime));
+// client.exchangeInfo().then(info => console.log(info));
+// client.testConnectivity().then(ping => console.log(ping));
+// client.getAccountInfo().then(acc => console.log(acc));
 
 
 const operation = {
@@ -138,13 +145,6 @@ const operation = {
     get SELL() {
         return this._SELL;
     }
-};
-
-
-const getMarketPrice = () => {
-    // TODO: GET request to exchange API for current price of the asset
-    // RETURN: market price
-
 };
 
 const placeSellOrder = () => {
