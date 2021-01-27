@@ -3,6 +3,11 @@ const helper = require("./helper.js");
 const fetch = require("node-fetch");
 const crypto = require("crypto");
 
+// testnet
+// const base = "https://testnet.binance.vision/api"; //testnet
+// "apiKey": "9Ixma9sh48RdeHhSIfyt3ZE1hHifw8ohH2buTIVCHFnFfdTiGV1jWA5M9aMYYeny",
+// "apiSecret": "YHugV9hJiEmEO2v7xBWx8ZFZH3j9AO04rdEnsDwmwE5ePFScwI7F3Xh3luMjCsRC"
+
 const base = "https://api.binance.com/";
 
 class Client {
@@ -39,7 +44,7 @@ class Client {
     signature(query) {
         return crypto
             .createHmac("sha256", this.apiSecret)
-            .update("timestamp=" + query)
+            .update(query)
             .digest("hex");
     }
 
@@ -47,10 +52,18 @@ class Client {
         return server - date;
     }
 
+    queryString(obj) {
+        return Object.keys(obj).reduce((a, k) => { 
+            if (obj[k] !== undefined) {
+                a.push(k + '=' + encodeURIComponent(obj[k]))
+            } 
+            return a;
+        }, []).join( '&' );
+    }
+
     async getRequest(endpoint, data = {}) {
         try {
             const response = await fetch(endpoint, data);
-            // console.log(response);
             if (response.ok) {
                 const jsonResponse = await response.json();
                 return jsonResponse;
@@ -105,7 +118,7 @@ class Client {
     async getAccountInfo() {
         try {
             const serverTime = await this.adjustTimestamp(this.getServerTime());
-            const signature = this.signature(serverTime);
+            const signature = this.signature("timestamp=" + serverTime);
 
             const response = await fetch(
                 `${base}api/v3/account?timestamp=${serverTime}&signature=${signature}`,
@@ -151,11 +164,61 @@ class Client {
         //  2. Send a POST request to exchange API to do a SELL operation
         // RETURN: price at operation execution
     }
+
+    async placeBuyOrder() {
+        // TODO:
+        //  1. Calculate the amount to buy (based on some threshold
+        //     you set e.g. 50% of total balance)
+        //  2. Send a POST request to exchange API to do a BUY operation
+        // RETURN: price at operation execution
+    };
+    
+    async getOperationDetails(operationId) {
+        // TODO: GET request to API for the details of an operation
+        // RETURN: details of the operation
+    };
+    
+    async testNewOrders() {
+        const serverTime = await this.adjustTimestamp(this.getServerTime());
+        const query = this.queryString({
+            symbol: "ETHBTC",
+            side: "SELL",
+            type: "LIMIT",
+            timeInForce: "GTC",
+            quantity: 1,
+            price: 0.1,
+            recvWindow: 5000, 
+            timestamp: serverTime, 
+        });
+        const sig = this.signature(query);
+
+        try {
+            const response = await fetch(`${base}api/v3/order/test?${query}&signature=${sig}`, 
+            {
+                method: 'POST',
+                headers: {
+                    "X-MBX-APIKEY": this.apiKey,
+                    "Content-type": "x-www-form-urlencoded",
+                },
+            });
+
+            if (response.ok) {
+                const jsonResponse = await response.json();
+                return jsonResponse;
+            }
+            throw new Error("Request failed!");
+        } catch (error) {
+            console.log(error);
+        }
+    }
 }
 
 const client = new Client(config.apiKey, config.apiSecret);
-client.testNewOrder().then((mp) => console.log(mp));
 // client.getAccountInfo().then((mp) => console.log(mp));
+// client.exchangeInfo().then((mp) => console.log(mp));
+// client.getBalances().then((mp) => console.log(mp));
+// client.getMarketPrice('ETHBTC').then((mp) => console.log(mp));
+client.testNewOrders().then((mp) => console.log(mp));
 
 
 const operation = {
@@ -173,17 +236,4 @@ const operation = {
     get SELL() {
         return this._SELL;
     },
-};
-
-const placeBuyOrder = () => {
-    // TODO:
-    //  1. Calculate the amount to buy (based on some threshold
-    //     you set e.g. 50% of total balance)
-    //  2. Send a POST request to exchange API to do a BUY operation
-    // RETURN: price at operation execution
-};
-
-const getOperationDetails = (operationId) => {
-    // TODO: GET request to API for the details of an operation
-    // RETURN: details of the operation
 };
