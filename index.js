@@ -10,7 +10,7 @@ class Client {
     constructor(apiKey, apiSecret) {
         this.apiKey = apiKey;
         this.apiSecret = apiSecret;
-        this.serverTime = this.checkServerTime();
+        this.serverTime = 0;
     }
 
     get apiKey() {
@@ -48,6 +48,7 @@ class Client {
     async getRequest(endpoint, data = {}) {
         try {
             const response = await fetch(endpoint, data = {});
+            console.log(response)
             if (response.ok) {
                 const jsonResponse = await response.json();
                 return jsonResponse;
@@ -59,17 +60,17 @@ class Client {
     }
 
     async checkServerTime() {
-        const response = await this.getRequest(base + 'api/v3/time');
+        const response = await this.getRequest(`${base}api/v3/time`);
         return response.serverTime;
     }
 
     async exchangeInfo() {
-        const response = await this.getRequest(base + 'api/v3/exchangeInfo');
+        const response = await this.getRequest(`${base}api/v3/exchangeInfo`);
         return response;
     }
 
     async testConnectivity() {
-        const response = await this.getRequest(base + 'api/v3/ping');
+        const response = await this.getRequest(`${base}api/v3/ping`);
         return response;
     }
 
@@ -86,14 +87,14 @@ class Client {
             const serverTime = await this.adjustTimestamp(this.checkServerTime());
             const signature = this.signature(serverTime);
 
-            const response = await fetch(base + 'api/v3/account' + '?' + 'timestamp=' + serverTime + '&signature=' + signature, {
+            const response = await fetch(`${base}api/v3/account?timestamp=${serverTime}&signature=${signature}`, {
                 method: 'GET',
                 headers: {
                     'X-MBX-APIKEY': this.apiKey,
                     'Content-type': 'x-www-form-urlencoded'
                 }
             });
-            
+
             if (response.ok) {
                 const jsonResponse = await response.json();
                 return jsonResponse;
@@ -105,29 +106,22 @@ class Client {
     }
 
     async getBalances() {
-        // TODO: GET request to exchange API for your account's balances
         const data = await this.getAccountInfo();
         const balances = data.balances
             .map(asset => asset)
             .filter(value => +value.free > 0);
-        // RETURN: balances
         return balances;
     }
 
-    async getMarketPrice() {
-        // TODO: GET request to exchange API for current price of the asset
-
-        // RETURN: market price
+    async getMarketPrice(symbol = 'ETHBTC') {
+        const param = typeof symbol === 'string' ? '?symbol=' + symbol : '';
+        const marketPrice = await this.getRequest(`${base}api/v3/ticker/price${param}`);
         return marketPrice;
     }
 }
 
 const client = new Client(config.apiKey, config.apiSecret);
-// client.getBalances().then(resolve => console.log(resolve));
-// client.checkServerTime().then(serverTime => console.log(serverTime));
-// client.exchangeInfo().then(info => console.log(info));
-// client.testConnectivity().then(ping => console.log(ping));
-// client.getAccountInfo().then(acc => console.log(acc));
+client.getMarketPrice().then(mp => console.log(mp));
 
 
 const operation = {
