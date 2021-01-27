@@ -3,11 +3,6 @@ const helper = require("./helper.js");
 const fetch = require("node-fetch");
 const crypto = require("crypto");
 
-// testnet
-// const base = "https://testnet.binance.vision/api"; //testnet
-// "apiKey": "9Ixma9sh48RdeHhSIfyt3ZE1hHifw8ohH2buTIVCHFnFfdTiGV1jWA5M9aMYYeny",
-// "apiSecret": "YHugV9hJiEmEO2v7xBWx8ZFZH3j9AO04rdEnsDwmwE5ePFScwI7F3Xh3luMjCsRC"
-
 const base = "https://api.binance.com/";
 
 class Client {
@@ -53,17 +48,18 @@ class Client {
     }
 
     queryString(obj) {
-        return Object.keys(obj).reduce((a, k) => { 
+        return Object.keys(obj).reduce((a, k) => {
             if (obj[k] !== undefined) {
                 a.push(k + '=' + encodeURIComponent(obj[k]))
-            } 
+            }
             return a;
-        }, []).join( '&' );
+        }, []).join('&');
     }
 
     async getRequest(endpoint, data = {}) {
         try {
             const response = await fetch(endpoint, data);
+            // console.log(response)
             if (response.ok) {
                 const jsonResponse = await response.json();
                 return jsonResponse;
@@ -76,11 +72,8 @@ class Client {
 
     async postRequest(endpoint, data) {
         try {
-            const response = await fetch(endpoint, {
-                method: "POST",
-                body: data,
-            });
-            console.log(response);
+            const response = await fetch(endpoint, data);
+            // console.log(response);
             if (response.ok) {
                 const jsonResponse = await response.json();
                 return jsonResponse;
@@ -116,29 +109,21 @@ class Client {
     }
 
     async getAccountInfo() {
-        try {
-            const serverTime = await this.adjustTimestamp(this.getServerTime());
-            const signature = this.signature("timestamp=" + serverTime);
+        const serverTime = await this.adjustTimestamp(this.getServerTime());
+        const query = this.queryString({ timestamp: serverTime });
+        const signature = this.signature(query);
 
-            const response = await fetch(
-                `${base}api/v3/account?timestamp=${serverTime}&signature=${signature}`,
-                {
-                    method: "GET",
-                    headers: {
-                        "X-MBX-APIKEY": this.apiKey,
-                        "Content-type": "x-www-form-urlencoded",
-                    },
-                }
-            );
-
-            if (response.ok) {
-                const jsonResponse = await response.json();
-                return jsonResponse;
+        const response = await this.getRequest(`${base}api/v3/account?${query}&signature=${signature}`,
+            {
+                method: "GET",
+                headers: {
+                    "X-MBX-APIKEY": this.apiKey,
+                    "Content-type": "x-www-form-urlencoded",
+                },
             }
-            throw new Error("Request failed!");
-        } catch (error) {
-            console.log(error);
-        }
+        );
+
+        return response;
     }
 
     async getBalances() {
@@ -157,6 +142,32 @@ class Client {
         return marketPrice;
     }
 
+    async testNewOrders(symbol, side, type = "LIMIT", timeInForce = "GTC") {
+        const serverTime = await this.adjustTimestamp(this.getServerTime());
+        const query = this.queryString({
+            symbol: "ETHBTC",
+            side: "SELL",
+            type: "LIMIT",
+            timeInForce: "GTC",
+            quantity: 1,
+            price: 0.1,
+            recvWindow: 5000, 
+            timestamp: serverTime, 
+        });
+        const sig = this.signature(query);
+
+        const response = await this.postRequest(`${base}api/v3/order/test?${query}&signature=${sig}`,
+            {
+                method: 'POST',
+                headers: {
+                    "X-MBX-APIKEY": this.apiKey,
+                    "Content-type": "x-www-form-urlencoded",
+            },
+        });
+
+        return response;
+    }
+
     async placeSellOrder() {
         // TODO:
         //  1. Calculate the amount to sell (based on some threshold
@@ -171,45 +182,23 @@ class Client {
         //     you set e.g. 50% of total balance)
         //  2. Send a POST request to exchange API to do a BUY operation
         // RETURN: price at operation execution
-    };
-    
-    async getOperationDetails(operationId) {
-        // TODO: GET request to API for the details of an operation
-        // RETURN: details of the operation
-    };
-    
-    async testNewOrders() {
+    }
+
+    async getOperationDetails(operationId = "ETHBTC") {
         const serverTime = await this.adjustTimestamp(this.getServerTime());
-        const query = this.queryString({
-            symbol: "ETHBTC",
-            side: "SELL",
-            type: "LIMIT",
-            timeInForce: "GTC",
-            quantity: 1,
-            price: 0.1,
-            recvWindow: 5000, 
-            timestamp: serverTime, 
-        });
+        const query = this.queryString({ symbol: operationId, recvWindow: 5000, timestamp: serverTime });
         const sig = this.signature(query);
 
-        try {
-            const response = await fetch(`${base}api/v3/order/test?${query}&signature=${sig}`, 
+        // TODO: GET request to API for the details of an operation (operationId / orderId ???)
+        const response = await this.getRequest(`${base}api/v3/openOrders?${query}&signature=${sig}`, 
             {
-                method: 'POST',
+                method: 'GET',
                 headers: {
                     "X-MBX-APIKEY": this.apiKey,
                     "Content-type": "x-www-form-urlencoded",
-                },
-            });
-
-            if (response.ok) {
-                const jsonResponse = await response.json();
-                return jsonResponse;
-            }
-            throw new Error("Request failed!");
-        } catch (error) {
-            console.log(error);
-        }
+            },
+        });
+        return response;
     }
 }
 
@@ -218,7 +207,8 @@ const client = new Client(config.apiKey, config.apiSecret);
 // client.exchangeInfo().then((mp) => console.log(mp));
 // client.getBalances().then((mp) => console.log(mp));
 // client.getMarketPrice('ETHBTC').then((mp) => console.log(mp));
-client.testNewOrders().then((mp) => console.log(mp));
+// client.testNewOrders().then((mp) => console.log(mp));
+client.getOperationDetails("ETHBTC").then((mp) => console.log(mp));
 
 
 const operation = {
