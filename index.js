@@ -1,5 +1,3 @@
-// const config = require("./config.json");
-const helper = require("./helper");
 const fetch = require("node-fetch");
 const crypto = require("crypto");
 
@@ -15,9 +13,9 @@ class Client {
             BUY: 0,
             SELL: 1,
             BUY_DIP_THRESHOLD: 0.02, // buy if price decreased more than TH
-            BUY_UPWARD_TREND_THRESHOLD: 0.01, // buy if price increased more than TH
+            BUY_UPWARD_TREND_THRESHOLD: 0.05, // buy if price increased more than TH
             SELL_PROFIT_THRESHOLD: 0.02, // sell if price increased above TH
-            SELL_STOP_LOSS_THRESHOLD: 0.01, // stop loss
+            SELL_STOP_LOSS_THRESHOLD: 0.05, // stop loss
         };
     }
 
@@ -100,7 +98,7 @@ class Client {
     async postRequest(endpoint, data) {
         try {
             const response = await fetch(endpoint, data);
-            console.log(response);
+            // console.log(response);
             if (response.ok) {
                 const jsonResponse = await response.json();
                 return jsonResponse;
@@ -197,6 +195,7 @@ class Client {
     }
 
     async placeSellOrder(sym, sell = "SELL", orderType = "LIMIT", tif = "GTC") {
+        console.log('ATTEMPT TO SELL .....')
         const priceInfo = await Promise.all([
             this.priceInUSD(sym),
             this.getBalances(),
@@ -234,10 +233,12 @@ class Client {
                 },
             }
         );
+        console.log(response.price);
         return response.price;
     }
 
     async placeBuyOrder(sym, buy = "BUY", orderType = "LIMIT", tif = "GTC") {
+        console.log('ATTEMPT TO BUY .....')
         const priceInfo = await Promise.all([
             this.priceInUSD(sym),
             this.getBalances(),
@@ -275,6 +276,7 @@ class Client {
                 },
             }
         );
+        console.log(response.price);
         return response.price;
     }
 
