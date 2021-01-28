@@ -1,15 +1,15 @@
-const config = require("./config.json");
-const helper = require("./helper.js");
+// const config = require("./config.json");
+const helper = require("./helper");
 const fetch = require("node-fetch");
 const crypto = require("crypto");
 
-const base = "https://api.binance.com/";
 
 class Client {
     constructor(apiKey, apiSecret) {
         this.apiKey = apiKey;
         this.apiSecret = apiSecret;
         this.serverTime = 0;
+        this.base = "https://api.binance.com/";
         this.order = {}; // for options see helper.js
         this.operation = {
             BUY: 0,
@@ -112,17 +112,17 @@ class Client {
     }
 
     async getServerTime() {
-        const response = await this.getRequest(`${base}api/v3/time`);
+        const response = await this.getRequest(`${this.base}api/v3/time`);
         return response.serverTime;
     }
 
     async exchangeInfo() {
-        const response = await this.getRequest(`${base}api/v3/exchangeInfo`);
+        const response = await this.getRequest(`${this.base}api/v3/exchangeInfo`);
         return response;
     }
 
     async testConnectivity() {
-        const response = await this.getRequest(`${base}api/v3/ping`);
+        const response = await this.getRequest(`${this.base}api/v3/ping`);
         return response;
     }
 
@@ -141,7 +141,7 @@ class Client {
         const signature = this.signature(query);
 
         const response = await this.getRequest(
-            `${base}api/v3/account?${query}&signature=${signature}`,
+            `${this.base}api/v3/account?${query}&signature=${signature}`,
             {
                 method: "GET",
                 headers: {
@@ -168,7 +168,7 @@ class Client {
         const sig = this.signature(query);
 
         const response = await this.postRequest(
-            `${base}api/v3/order/test?${query}&signature=${sig}`,
+            `${this.base}api/v3/order/test?${query}&signature=${sig}`,
             {
                 method: "POST",
                 headers: {
@@ -191,7 +191,7 @@ class Client {
     async getMarketPrice(symbol = "ETHBTC") {
         const param = typeof symbol === "string" ? "?symbol=" + symbol : "";
         const marketPrice = await this.getRequest(
-            `${base}api/v3/ticker/price${param}`
+            `${this.base}api/v3/ticker/price${param}`
         );
         return marketPrice;
     }
@@ -225,7 +225,7 @@ class Client {
         const sig = this.signature(query);
 
         const response = await this.postRequest(
-            `${base}api/v3/order?${query}&signature=${sig}`,
+            `${this.base}api/v3/order?${query}&signature=${sig}`,
             {
                 method: "POST",
                 headers: {
@@ -266,7 +266,7 @@ class Client {
         const sig = this.signature(query);
 
         const response = await this.postRequest(
-            `${base}api/v3/order?${query}&signature=${sig}`,
+            `${this.base}api/v3/order?${query}&signature=${sig}`,
             {
                 method: "POST",
                 headers: {
@@ -289,7 +289,7 @@ class Client {
         });
         const sig = this.signature(query);
         const response = await this.postRequest(
-            `${base}api/v3/order?${query}&signature=${sig}`,
+            `${this.base}api/v3/order?${query}&signature=${sig}`,
             {
                 method: "DELETE",
                 headers: {
@@ -307,7 +307,7 @@ class Client {
         const sig = this.signature(query);
 
         const response = await this.getRequest(
-            `${base}api/v3/openOrders?${query}&signature=${sig}`,
+            `${this.base}api/v3/openOrders?${query}&signature=${sig}`,
             {
                 method: "GET",
                 headers: {
@@ -320,7 +320,9 @@ class Client {
     }
 }
 
-const client = new Client(config.apiKey, config.apiSecret);
+module.exports = Client;
+
+// const client = new Client(config.apiKey, config.apiSecret);
 
 // ##################### TESTING CLASS METHODS #####################
 
@@ -333,5 +335,5 @@ const client = new Client(config.apiKey, config.apiSecret);
 
 // client.placeSellOrder("ETHBTC").then((mp) => console.log(mp));
 // client.placeBuyOrder("ETHBTC").then((mp) => console.log(mp));
-client.cancelOrder(client.getOperationDetails()).then((mp) => console.log(mp));
+// client.cancelOrder(client.getOperationDetails()).then((mp) => console.log(mp));
 // client.getOperationDetails().then((mp) => console.log(mp));
