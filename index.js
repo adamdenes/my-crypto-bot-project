@@ -208,13 +208,7 @@ class Client {
         const freeCrypto = priceInfo[1][0].free;
         const marketPrice = priceInfo[2].price;
         let pt = +marketPrice + (marketPrice * this.operation.SELL_PROFIT_THRESHOLD);
-        let sl = +marketPrice - (marketPrice * this.operation.SELL_STOP_LOSS_THRESHOLD);
-        // console.log('current price in USD: ' + currentPrice)
-        // console.log('marketprice: ' + marketPrice)
-        // console.log('available for trading ETH: ' + freeCrypto)
-        // console.log('sell 2% of available: ' + freeCrypto * 0.02)
-        // console.log(`sell if marketprice * sellTH reached: ' + ${pt.toFixed(6)}`)
-        // console.log(`set stop loss if marketprice * sell_SL_TH reached: ' + ${sl.toFixed(3)}`)
+        // let sl = +marketPrice - (marketPrice * this.operation.SELL_STOP_LOSS_THRESHOLD);
 
         //  2. Send a POST request to exchange API to do a SELL operation
         const serverTime = await this.adjustTimestamp(this.getServerTime());
@@ -240,9 +234,8 @@ class Client {
             },
         });
 
-        console.log(response);
-        return response.price;
         // RETURN: price at operation execution
+        return response.price;
     }
 
     async placeBuyOrder() {
@@ -256,9 +249,25 @@ class Client {
         // RETURN: price at operation execution
     }
 
-    async getOperationDetails(operationId = "ETHBTC") {
+    async cancelOrder(operation) {
+        const openOrders = await operation;
         const serverTime = await this.adjustTimestamp(this.getServerTime());
-        const query = this.queryString({ symbol: operationId, recvWindow: 5000, timestamp: serverTime });
+        const query = this.queryString({ symbol: openOrders[0].symbol, orderId: openOrders[0].orderId, recvWindow: 5000, timestamp: serverTime });
+        const sig = this.signature(query);
+        const response = await this.postRequest(`${base}api/v3/order?${query}&signature=${sig}`,
+        {
+            method: 'DELETE',
+            headers: {
+                "X-MBX-APIKEY": this.apiKey,
+                "Content-type": "x-www-form-urlencoded",
+            },
+        });
+        return response;
+    }
+
+    async getOperationDetails() {
+        const serverTime = await this.adjustTimestamp(this.getServerTime());
+        const query = this.queryString({ recvWindow: 5000, timestamp: serverTime });
         const sig = this.signature(query);
 
         // TODO: GET request to API for the details of an operation (operationId / orderId ???)
@@ -280,7 +289,8 @@ const client = new Client(config.apiKey, config.apiSecret);
 // client.getBalances().then((mp) => console.log(mp));
 // client.getMarketPrice('ETHBTC').then((mp) => console.log(mp));
 // client.testNewOrders().then((mp) => console.log(mp));
-// client.getOperationDetails("ETHBTC").then((mp) => console.log(mp));
 // client.priceInUSD("ETHBTC", "BTCUSDT").then((mp) => console.log(mp));
 
-client.placeSellOrder("ETHBTC").then((mp) => console.log(mp));
+// client.placeSellOrder("ETHBTC").then((mp) => console.log(mp));
+client.cancelOrder(client.getOperationDetails()).then((mp) => console.log(mp));
+// client.getOperationDetails().then((mp) => console.log(mp));
