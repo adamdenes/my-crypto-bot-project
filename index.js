@@ -10,7 +10,7 @@ class Client {
         this.apiKey = apiKey;
         this.apiSecret = apiSecret;
         this.serverTime = 0;
-        this.order = {} // for options see helper.js
+        this.order = {}; // for options see helper.js
         this.operation = {
             BUY: 0,
             SELL: 1,
@@ -18,7 +18,7 @@ class Client {
             BUY_UPWARD_TREND_THRESHOLD: 0.01, // buy if price increased more than TH
             SELL_PROFIT_THRESHOLD: 0.02, // sell if price increased above TH
             SELL_STOP_LOSS_THRESHOLD: 0.01, // stop loss
-        }
+        };
     }
 
     get apiKey() {
@@ -65,20 +65,21 @@ class Client {
     }
 
     queryString(obj) {
-        return Object.keys(obj).reduce((a, k) => {
-            if (obj[k] !== undefined) {
-                a.push(k + '=' + encodeURIComponent(obj[k]))
-            }
-            return a;
-        }, []).join('&');
+        return Object.keys(obj)
+            .reduce((a, k) => {
+                if (obj[k] !== undefined) {
+                    a.push(k + "=" + encodeURIComponent(obj[k]));
+                }
+                return a;
+            }, [])
+            .join("&");
     }
 
-    async priceInUSD(cryptoPriceInBTC, cryptoPriceInUSDT) {
+    async priceInUSD(cryptoPriceInQuote) {
         const currentPrices = await Promise.all([
-            this.getMarketPrice(cryptoPriceInBTC),
-            this.getMarketPrice(cryptoPriceInUSDT)
+            this.getMarketPrice(cryptoPriceInQuote),
+            this.getMarketPrice(cryptoPriceInQuote.slice(3) + "USDT"),
         ]);
-
         return currentPrices.reduce((acc, cp) => acc.price * cp.price);
     }
 
@@ -99,7 +100,7 @@ class Client {
     async postRequest(endpoint, data) {
         try {
             const response = await fetch(endpoint, data);
-            // console.log(response);
+            console.log(response);
             if (response.ok) {
                 const jsonResponse = await response.json();
                 return jsonResponse;
@@ -139,7 +140,8 @@ class Client {
         const query = this.queryString({ timestamp: serverTime });
         const signature = this.signature(query);
 
-        const response = await this.getRequest(`${base}api/v3/account?${query}&signature=${signature}`,
+        const response = await this.getRequest(
+            `${base}api/v3/account?${query}&signature=${signature}`,
             {
                 method: "GET",
                 headers: {
@@ -148,7 +150,6 @@ class Client {
                 },
             }
         );
-
         return response;
     }
 
@@ -166,15 +167,16 @@ class Client {
         });
         const sig = this.signature(query);
 
-        const response = await this.postRequest(`${base}api/v3/order/test?${query}&signature=${sig}`,
+        const response = await this.postRequest(
+            `${base}api/v3/order/test?${query}&signature=${sig}`,
             {
-                method: 'POST',
+                method: "POST",
                 headers: {
                     "X-MBX-APIKEY": this.apiKey,
                     "Content-type": "x-www-form-urlencoded",
                 },
-            });
-
+            }
+        );
         return response;
     }
 
@@ -195,23 +197,20 @@ class Client {
     }
 
     async placeSellOrder(sym, sell = "SELL", orderType = "LIMIT", tif = "GTC") {
-        // TODO:
-        //  1. Calculate the amount to sell (based on some threshold
-        //     you set e.g. 50% of total balance)
         const priceInfo = await Promise.all([
-            this.priceInUSD("ETHBTC", "BTCUSDT"),
+            this.priceInUSD(sym),
             this.getBalances(),
-            this.getMarketPrice()
+            this.getMarketPrice(sym),
+            this.adjustTimestamp(this.getServerTime())
         ]);
 
-        const currentPrice = priceInfo[0];
+        // const currentPrice = priceInfo[0];
         const freeCrypto = priceInfo[1][0].free;
         const marketPrice = priceInfo[2].price;
-        let pt = +marketPrice + (marketPrice * this.operation.SELL_PROFIT_THRESHOLD);
+        const serverTime = priceInfo[3];
+        let pt = +marketPrice + marketPrice * this.operation.SELL_PROFIT_THRESHOLD;
         // let sl = +marketPrice - (marketPrice * this.operation.SELL_STOP_LOSS_THRESHOLD);
 
-        //  2. Send a POST request to exchange API to do a SELL operation
-        const serverTime = await this.adjustTimestamp(this.getServerTime());
         this.order = {
             symbol: sym,
             side: sell,
@@ -225,43 +224,80 @@ class Client {
         const query = this.queryString(this.order);
         const sig = this.signature(query);
 
-        const response = await this.postRequest(`${base}api/v3/order?${query}&signature=${sig}`,
-        {
-            method: 'POST',
-            headers: {
-                "X-MBX-APIKEY": this.apiKey,
-                "Content-type": "x-www-form-urlencoded",
-            },
-        });
-
-        // RETURN: price at operation execution
+        const response = await this.postRequest(
+            `${base}api/v3/order?${query}&signature=${sig}`,
+            {
+                method: "POST",
+                headers: {
+                    "X-MBX-APIKEY": this.apiKey,
+                    "Content-type": "x-www-form-urlencoded",
+                },
+            }
+        );
         return response.price;
     }
 
-    async placeBuyOrder() {
-        // TODO:
-        //  1. Calculate the amount to buy (based on some threshold
-        //     you set e.g. 50% of total balance)
+    async placeBuyOrder(sym, buy = "BUY", orderType = "LIMIT", tif = "GTC") {
+        const priceInfo = await Promise.all([
+            this.priceInUSD(sym),
+            this.getBalances(),
+            this.getMarketPrice(sym),
+            this.adjustTimestamp(this.getServerTime())
+        ]);
 
-        // calculateBuy()
+        // const currentPrice = priceInfo[0];
+        const freeCrypto = priceInfo[1][1].free;
+        const marketPrice = priceInfo[2].price;
+        const serverTime = priceInfo[3];
+        let pt = +marketPrice - marketPrice * this.operation.BUY_DIP_THRESHOLD;
+        // let sl = +marketPrice + (marketPrice * this.operation.BUY_UPWARD_TREND_THRESHOLD);
 
-        //  2. Send a POST request to exchange API to do a BUY operation
-        // RETURN: price at operation execution
+        this.order = {
+            symbol: sym,
+            side: buy,
+            type: orderType,
+            timeInForce: tif,
+            quantity: +(freeCrypto * 0.02).toFixed(3),
+            price: +pt.toFixed(6),
+            recvWindow: 5000,
+            timestamp: serverTime,
+        };
+        const query = this.queryString(this.order);
+        const sig = this.signature(query);
+
+        const response = await this.postRequest(
+            `${base}api/v3/order?${query}&signature=${sig}`,
+            {
+                method: "POST",
+                headers: {
+                    "X-MBX-APIKEY": this.apiKey,
+                    "Content-type": "x-www-form-urlencoded",
+                },
+            }
+        );
+        return response.price;
     }
 
     async cancelOrder(operation) {
         const openOrders = await operation;
         const serverTime = await this.adjustTimestamp(this.getServerTime());
-        const query = this.queryString({ symbol: openOrders[0].symbol, orderId: openOrders[0].orderId, recvWindow: 5000, timestamp: serverTime });
-        const sig = this.signature(query);
-        const response = await this.postRequest(`${base}api/v3/order?${query}&signature=${sig}`,
-        {
-            method: 'DELETE',
-            headers: {
-                "X-MBX-APIKEY": this.apiKey,
-                "Content-type": "x-www-form-urlencoded",
-            },
+        const query = this.queryString({
+            symbol: openOrders[0].symbol,
+            orderId: openOrders[0].orderId,
+            recvWindow: 5000,
+            timestamp: serverTime,
         });
+        const sig = this.signature(query);
+        const response = await this.postRequest(
+            `${base}api/v3/order?${query}&signature=${sig}`,
+            {
+                method: "DELETE",
+                headers: {
+                    "X-MBX-APIKEY": this.apiKey,
+                    "Content-type": "x-www-form-urlencoded",
+                },
+            }
+        );
         return response;
     }
 
@@ -270,27 +306,32 @@ class Client {
         const query = this.queryString({ recvWindow: 5000, timestamp: serverTime });
         const sig = this.signature(query);
 
-        // TODO: GET request to API for the details of an operation (operationId / orderId ???)
-        const response = await this.getRequest(`${base}api/v3/openOrders?${query}&signature=${sig}`,
+        const response = await this.getRequest(
+            `${base}api/v3/openOrders?${query}&signature=${sig}`,
             {
-                method: 'GET',
+                method: "GET",
                 headers: {
                     "X-MBX-APIKEY": this.apiKey,
                     "Content-type": "x-www-form-urlencoded",
                 },
-            });
+            }
+        );
         return response;
     }
 }
 
 const client = new Client(config.apiKey, config.apiSecret);
+
+// ##################### TESTING CLASS METHODS #####################
+
 // client.getAccountInfo().then((mp) => console.log(mp));
 // client.exchangeInfo().then((mp) => console.log(mp));
 // client.getBalances().then((mp) => console.log(mp));
 // client.getMarketPrice('ETHBTC').then((mp) => console.log(mp));
 // client.testNewOrders().then((mp) => console.log(mp));
-// client.priceInUSD("ETHBTC", "BTCUSDT").then((mp) => console.log(mp));
+// client.priceInUSD("ETHBTC").then((mp) => console.log(mp));
 
 // client.placeSellOrder("ETHBTC").then((mp) => console.log(mp));
+// client.placeBuyOrder("ETHBTC").then((mp) => console.log(mp));
 client.cancelOrder(client.getOperationDetails()).then((mp) => console.log(mp));
 // client.getOperationDetails().then((mp) => console.log(mp));
