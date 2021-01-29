@@ -150,6 +150,23 @@ class Client {
         return response;
     }
 
+    async minQuantity(exchInf, sym) {
+        const info = await exchInf;
+        let minQuantity = 0;
+
+        for (let i = 0; i < info.symbols.length; i++) {
+            if (info.symbols[i].symbol.includes(sym)) {
+                for (let j = 0; j < info.symbols[i].filters.length; j++) {
+                    if (info.symbols[i].filters[j].filterType === "LOT_SIZE") {
+                        // console.log(info.symbols[i].filters[j]);
+                        minQuantity = info.symbols[i].filters[j].minQty;
+                    }
+                }
+            }
+        }
+        return minQuantity;
+    }
+
     async testConnectivity() {
         const response = await this.getRequest(`${this.base}api/v3/ping`);
         logger('TEST-CON', `GET testConnectivity() success`, 'info');
@@ -184,7 +201,7 @@ class Client {
                     },
                 }
             );
-            logger('ACCOUNT', `GET getAccountInfo() success => '${response.permissions}'`, 'info');
+            // logger('ACCOUNT', `GET getAccountInfo() success => '${response.permissions}'`, 'info');
             return response;
         } catch (error) {
             logger('ACCOUNT', `GET getAccountInfo() failed => '${error}'`, 'error');
@@ -224,7 +241,7 @@ class Client {
             const balances = data.balances
                 .map((asset) => asset)
                 .filter((value) => +value.free > 0);
-            logger('BALANCES', `GET getBalances() success`, 'info');
+            // logger('BALANCES', `GET getBalances() success`, 'info');
 
             return balances;
         } catch (error) {
@@ -242,7 +259,7 @@ class Client {
         return marketPrice;
     }
 
-    async placeSellOrder(sym, sell = "SELL", orderType = "LIMIT", tif = "GTC") {
+    async placeSellOrder(sym = "ETHBTC", sell = "SELL", orderType = "LIMIT", tif = "GTC") {
         logger('SELL-ORDER', `Attempt to sell: ${sym}`, 'info');
 
         try {
@@ -250,15 +267,32 @@ class Client {
                 this.priceInUSD(sym),
                 this.getBalances(),
                 this.getMarketPrice(sym),
-                this.adjustTimestamp(this.getServerTime())
+                this.adjustTimestamp(this.getServerTime()),
+                this.minQuantity(this.exchangeInfo(), sym)
             ]);
 
-            // const currentPrice = priceInfo[0];
-            const freeCrypto = priceInfo[1][0].free;
+            const quote = priceInfo[1][0].free;
+            const freeCrypto = priceInfo[1][1].free;
             const marketPrice = priceInfo[2].price;
             const serverTime = priceInfo[3];
             let pt = +marketPrice + marketPrice * this.operation.SELL_PROFIT_THRESHOLD;
             // let sl = +marketPrice - (marketPrice * this.operation.SELL_STOP_LOSS_THRESHOLD);
+            let minQuantity = priceInfo[4];
+            let priceQuantity = +(freeCrypto * 0.02).toFixed(3) * marketPrice;
+
+            logger('SELL-ORDER', `Quote: ${priceInfo[1][0].asset} - Free: ${quote}`, 'info');
+            logger('SELL-ORDER', `Available: ${freeCrypto}`, 'info');
+            logger('SELL-ORDER', `Marketprice: ${marketPrice}`, 'info');
+            logger('SELL-ORDER', `Quantity: ${+(freeCrypto * 0.02).toFixed(3)}`, 'info');
+            logger('SELL-ORDER', `Quantity * Price: ${+(freeCrypto * 0.02).toFixed(3) * marketPrice}`, 'info');
+            logger('SELL-ORDER', `Profit Target: ${+pt.toFixed(6)}`, 'info');
+            logger('SELL-ORDER', `Minimum Quantity: ${minQuantity}`, 'info');
+            logger('SELL-ORDER', `Minimum Quantity < Quantity : ${minQuantity < +(freeCrypto * 0.02).toFixed(3)}`, 'INFO');
+
+            // if price * quantity > available balance 
+            if (priceQuantity > freeCrypto) {
+                logger('SELL-ORDER', `Insufficient balance : ${freeCrypto}`, 'CRITICAL');
+            }
 
             this.order = {
                 symbol: sym,
@@ -290,7 +324,7 @@ class Client {
         }
     }
 
-    async placeBuyOrder(sym, buy = "BUY", orderType = "LIMIT", tif = "GTC") {
+    async placeBuyOrder(sym = "ETHBTC", buy = "BUY", orderType = "LIMIT", tif = "GTC") {
         logger('BUY-ORDER', `Attempt to buy: ${sym}`, 'info');
 
         try {
@@ -298,15 +332,33 @@ class Client {
                 this.priceInUSD(sym),
                 this.getBalances(),
                 this.getMarketPrice(sym),
-                this.adjustTimestamp(this.getServerTime())
+                this.adjustTimestamp(this.getServerTime()),
+                this.minQuantity(this.exchangeInfo(), sym)
             ]);
 
-            // const currentPrice = priceInfo[0];
+            const quote = priceInfo[1][0].free;
             const freeCrypto = priceInfo[1][1].free;
             const marketPrice = priceInfo[2].price;
             const serverTime = priceInfo[3];
             let pt = +marketPrice - marketPrice * this.operation.BUY_DIP_THRESHOLD;
             // let sl = +marketPrice + (marketPrice * this.operation.BUY_UPWARD_TREND_THRESHOLD);
+            let minQuantity = priceInfo[4];
+            let priceQuantity = +(freeCrypto * 0.02).toFixed(3) * marketPrice;
+
+            
+            logger('BUY-ORDER', `Quote: ${priceInfo[1][0].asset} - Free: ${quote}`, 'info');
+            logger('BUY-ORDER', `Available: ${freeCrypto}`, 'info');
+            logger('BUY-ORDER', `Marketprice: ${marketPrice}`, 'info');
+            logger('BUY-ORDER', `Quantity: ${+(freeCrypto * 0.02).toFixed(3)}`, 'info');
+            logger('BUY-ORDER', `Quantity * Price: ${+(freeCrypto * 0.02).toFixed(3) * marketPrice}`, 'info');
+            logger('BUY-ORDER', `Profit Target: ${+pt.toFixed(6)}`, 'info');
+            logger('BUY-ORDER', `Minimum Quantity: ${minQuantity}`, 'info');
+            logger('BUY-ORDER', `Minimum Quantity < Quantity : ${minQuantity < +(freeCrypto * 0.02).toFixed(3)}`, 'INFO');
+            
+            // if price * quantity > available balance 
+            if (priceQuantity > quote) {
+                logger('BUY-ORDER', `Insufficient balance : ${quote}`, 'CRITICAL');
+            }
 
             this.order = {
                 symbol: sym,
@@ -332,7 +384,6 @@ class Client {
                 }
             );
             logger('BUY-ORDER', `GET placeBuyOrder() success, BUY price => '${response.price}'`, 'warning');
-
             return response.price;
         } catch (error) {
             logger('BUY-ORDER', `GET placeBuyOrder() failed => '${error}'`, 'error');
@@ -383,7 +434,7 @@ class Client {
                     },
                 }
             );
-            logger('ACCOUNT', `GET getOperationDetails() success => '${true}'`, 'info');
+            // logger('ACCOUNT', `GET getOperationDetails() success => '${true}'`, 'info');
             return response;
         } catch (error) {
             logger('OPERATION-DETAILS', `GET getOperationDetails() failed => '${error}'`, 'error');
