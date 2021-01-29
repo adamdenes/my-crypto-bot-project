@@ -46,18 +46,16 @@ const startBot = async () => {
             if (openTrades.length != 0) {
                 logger('SYSTEM', `There is an open order... : ${openTrades[0].orderId}`, 'info');
                 await sleep(5000);
-                console.log('Recheck trades...')
                 logger('SYSTEM', `Recheck trades...`, 'info');
                 openTrades = await binance.getOperationDetails();
             } else {
-                console.log('Looking for trade...')
                 logger('SYSTEM', `Looking for trade...`, 'info');
                 await attemptToMakeTrade();
                 logger('SYSTEM', `Trade found, going to sleep...`, 'info');
                 await sleep(30000);
             }
-        } catch (error) {
-            console.log(error);
+        } catch (critical) {
+            logger('SYSTEM', `BOT failed, FATAL ERROR => '${critical}'`, 'CRITICAL');
         }  
     }
 };
