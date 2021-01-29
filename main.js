@@ -13,8 +13,12 @@ const attemptToMakeTrade = async () => {
 
     if (isNextOperationBuy) {
         tryToBuy(percentageDiff);
+        logger('TRY-TO-BUY', `lastOpPrice => '${await lastOpPrice}', percentageDiff => '${percentageDiff}'`, 'INFO');
+        logger('TRY-TO-BUY', `isNextOperationBuy => '${isNextOperationBuy}'`, 'INFO');
     } else {
         tryToSell(percentageDiff);
+        logger('TRY-TO-SELL', `lastOpPrice => '${await lastOpPrice}', percentageDiff => '${percentageDiff}'`, 'INFO');
+        logger('TRY-TO-SELL', `isNextOperationBuy => '${isNextOperationBuy}'`, 'INFO');
     }
 };
 
@@ -25,6 +29,7 @@ const tryToBuy = (percentageDiff) => {
         percentageDiff <= binance.operation.BUY_DIP_THRESHOLD) {
         lastOpPrice = binance.placeBuyOrder("ETHBTC");
         isNextOperationBuy = false;
+        return lastOpPrice;
     }
 };
 
@@ -33,6 +38,7 @@ const tryToSell = (percentageDiff) => {
         percentageDiff <= binance.operation.SELL_STOP_LOSS_THRESHOLD) {
         lastOpPrice = binance.placeSellOrder("ETHBTC");
         isNextOperationBuy = true;
+        return lastOpPrice;
     }
 };
 

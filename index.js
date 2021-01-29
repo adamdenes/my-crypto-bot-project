@@ -244,7 +244,7 @@ class Client {
     }
 
     async placeSellOrder(sym, sell = "SELL", orderType = "LIMIT", tif = "GTC") {
-        logger('SELL-ORDER', `Attempt to buy: ${sym}`, 'info');
+        logger('SELL-ORDER', `Attempt to sell: ${sym}`, 'info');
 
         try {
             const priceInfo = await Promise.all([
