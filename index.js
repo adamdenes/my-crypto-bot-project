@@ -139,7 +139,7 @@ class Client {
 
     async getServerTime() {
         const response = await this.getRequest(`${this.base}api/v3/time`);
-        logger('SERVERTIME', `GET getServerTime() success, servertime => '${response.serverTime}'`, 'info');
+        // logger('SERVERTIME', `GET getServerTime() success, servertime => '${response.serverTime}'`, 'info');
 
         return response.serverTime;
     }
@@ -164,7 +164,7 @@ class Client {
         const offset = this.offset(serverTime, currentTime);
         const useServerTime =
             offset < 0 ? serverTime - offset : serverTime + offset;
-        logger('TIMESTAMP', `GET adjustTimestamp() success, => '${useServerTime}'`, 'info');
+        // logger('TIMESTAMP', `GET adjustTimestamp() success, => '${useServerTime}'`, 'info');
 
         return useServerTime;
     }

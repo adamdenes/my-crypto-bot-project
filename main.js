@@ -44,7 +44,7 @@ const startBot = async () => {
     while (binance) {
         try {
             if (openTrades.length != 0) {
-                logger('SYSTEM', `There is an open order... : ${openTrades[0].orderId}`, 'info');
+                logger('SYSTEM', `There is an open order... orderId: ${openTrades[0].orderId}`, 'info');
                 await sleep(5000);
                 logger('SYSTEM', `Recheck trades...`, 'info');
                 openTrades = await binance.getOperationDetails();
