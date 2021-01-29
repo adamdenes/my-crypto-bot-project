@@ -434,7 +434,7 @@ class Client {
                     },
                 }
             );
-            // logger('ACCOUNT', `GET getOperationDetails() success => '${true}'`, 'info');
+            // logger('OPERATION', `GET getOperationDetails() success => '${response}'`, 'info');
             return response;
         } catch (error) {
             logger('OPERATION-DETAILS', `GET getOperationDetails() failed => '${error}'`, 'error');
