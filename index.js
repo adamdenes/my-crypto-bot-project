@@ -126,7 +126,6 @@ class Client {
     async postRequest(endpoint, data) {
         try {
             const response = await fetch(endpoint, data);
-            logger('POST', `POST request success ${response.ok}`, 'info');
             if (response.ok) {
                 const jsonResponse = await response.json();
                 return jsonResponse;

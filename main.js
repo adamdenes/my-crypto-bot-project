@@ -9,15 +9,15 @@ let lastOpPrice = 100.00
 
 const attemptToMakeTrade = async () => {
     const currentPrice = await binance.getMarketPrice("ETHBTC");
-    const percentageDiff = (currentPrice.price - lastOpPrice) / lastOpPrice * 100;
-
+    let percentageDiff = (currentPrice.price - lastOpPrice) / lastOpPrice * 100;
+    
     if (isNextOperationBuy) {
         tryToBuy(percentageDiff);
-        logger('TRY-TO-BUY', `lastOpPrice => '${await lastOpPrice}', percentageDiff => '${percentageDiff}'`, 'INFO');
+        logger('TRY-TO-BUY', `lastOpPrice => '${await lastOpPrice}'`, 'INFO');
         logger('TRY-TO-BUY', `isNextOperationBuy => '${isNextOperationBuy}'`, 'INFO');
     } else {
         tryToSell(percentageDiff);
-        logger('TRY-TO-SELL', `lastOpPrice => '${await lastOpPrice}', percentageDiff => '${percentageDiff}'`, 'INFO');
+        logger('TRY-TO-SELL', `lastOpPrice => '${await lastOpPrice}'`, 'INFO');
         logger('TRY-TO-SELL', `isNextOperationBuy => '${isNextOperationBuy}'`, 'INFO');
     }
 };
