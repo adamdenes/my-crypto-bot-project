@@ -8,9 +8,10 @@ let isNextOperationBuy = false;
 let lastOpPrice = 100.00
 
 const attemptToMakeTrade = async () => {
-    const promises = await Promise.all([binance.getMarketPrice('ETHBTC'), binance.getOperationDetails()]);
+    const promises = await Promise.all([binance.getMarketPrice('ETHBTC'), binance.getOperationDetails(), binance.priceInUSD('ETHBTC')]);
     const currentPrice = promises[0];
     const openTrades = promises[1];
+    const usdPrice = promises[2];
 
     lastOpPrice = Promise.resolve(lastOpPrice) ? await lastOpPrice : lastOpPrice;
     let percentageDiff = (Number(currentPrice.price) - Number(lastOpPrice)) / Number(lastOpPrice) * 100;
@@ -29,11 +30,11 @@ const attemptToMakeTrade = async () => {
         return;
     } else if (isNextOperationBuy) {
         tryToBuy(percentageDiff);
-        logger('TRY-TO-BUY', `lastOpPrice => '${await lastOpPrice} = $${await lastOpPrice * currentPrice.price}'`, 'INFO');
+        logger('TRY-TO-BUY', `lastOpPrice => '${await lastOpPrice} = $${(await lastOpPrice * usdPrice).toFixed(2)}'`, 'INFO');
         logger('TRY-TO-BUY', `isNextOperationBuy => '${isNextOperationBuy}'`, 'INFO');
     } else {
         tryToSell(percentageDiff);
-        logger('TRY-TO-SELL', `lastOpPrice => '${await lastOpPrice} = $${await lastOpPrice * currentPrice.price}'`, 'INFO');
+        logger('TRY-TO-SELL', `lastOpPrice => '${await lastOpPrice} = $${(await lastOpPrice * usdPrice).toFixed(2)}'`, 'INFO');
         logger('TRY-TO-SELL', `isNextOperationBuy => '${isNextOperationBuy}'`, 'INFO');
     }
 };
@@ -41,11 +42,10 @@ const attemptToMakeTrade = async () => {
 const sleep = ms => new Promise((resolve) => setTimeout(resolve, ms));
 
 const tryToBuy = (percentageDiff) => {
-    // console.log(percentageDiff)
-    // console.log(percentageDiff)
-    // console.log(percentageDiff)
-    // console.log(percentageDiff)
-    // console.log(percentageDiff)
+ 
+    // console.log( 'binance.operation.BUY_UPWARD_TREND_THRESHOLD = ' + binance.operation.BUY_UPWARD_TREND_THRESHOLD );
+    // console.log( 'binance.operation.BUY_DIP_THRESHOLD = ' + binance.operation.BUY_DIP_THRESHOLD );
+    // console.log( (percentageDiff >= binance.operation.BUY_UPWARD_TREND_THRESHOLD || percentageDiff <= binance.operation.BUY_DIP_THRESHOLD) );
 
     if (percentageDiff >= binance.operation.BUY_UPWARD_TREND_THRESHOLD ||
         percentageDiff <= binance.operation.BUY_DIP_THRESHOLD) {
@@ -57,11 +57,7 @@ const tryToBuy = (percentageDiff) => {
 };
 
 const tryToSell = (percentageDiff) => {
-    // console.log(percentageDiff)
-    // console.log(percentageDiff)
-    // console.log(percentageDiff)
-    // console.log(percentageDiff)
-    // console.log(percentageDiff)
+
     // console.log( 'binance.operation.SELL_PROFIT_THRESHOLD = ' + binance.operation.SELL_PROFIT_THRESHOLD );
     // console.log( 'binance.operation.SELL_STOP_LOSS_THRESHOLD = ' + binance.operation.SELL_STOP_LOSS_THRESHOLD );
     // console.log( (percentageDiff >= binance.operation.SELL_PROFIT_THRESHOLD || percentageDiff <= binance.operation.SELL_STOP_LOSS_THRESHOLD) );
