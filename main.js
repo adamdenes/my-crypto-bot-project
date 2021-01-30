@@ -29,11 +29,11 @@ const attemptToMakeTrade = async () => {
         return;
     } else if (isNextOperationBuy) {
         tryToBuy(percentageDiff);
-        logger('TRY-TO-BUY', `lastOpPrice => '${await lastOpPrice}'`, 'INFO');
+        logger('TRY-TO-BUY', `lastOpPrice => '${await lastOpPrice} = $${await lastOpPrice * currentPrice.price}'`, 'INFO');
         logger('TRY-TO-BUY', `isNextOperationBuy => '${isNextOperationBuy}'`, 'INFO');
     } else {
         tryToSell(percentageDiff);
-        logger('TRY-TO-SELL', `lastOpPrice => '${await lastOpPrice}'`, 'INFO');
+        logger('TRY-TO-SELL', `lastOpPrice => '${await lastOpPrice} = $${await lastOpPrice * currentPrice.price}'`, 'INFO');
         logger('TRY-TO-SELL', `isNextOperationBuy => '${isNextOperationBuy}'`, 'INFO');
     }
 };
