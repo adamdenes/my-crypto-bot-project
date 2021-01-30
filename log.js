@@ -2,6 +2,12 @@ const fs = require('fs');
 const process = require('process');
 
 
+/**
+ * Iterate over the current directory and
+ * return the last file with the current date.
+ * @param {string} path 
+ * @param {string} fileName 
+ */
 const readDir = async (path, fileName) => {
     const dir = await fs.promises.opendir(path);
     let files = [];
@@ -17,6 +23,12 @@ const readDir = async (path, fileName) => {
     return files[files.length - 1];
 }
 
+/**
+ * Create separate file with log entries.
+ * If there is a file with the current date timestamp,
+ * then append to that file. Otherwise create a new one.
+ * @param {string} msg 
+ */
 const logToFile = async (msg) => {
     let time = new Date().toISOString().split('T');
     const path = process.cwd();
@@ -33,6 +45,13 @@ const logToFile = async (msg) => {
     }
 };
 
+/**
+ * Simple logger function which creates separate file
+ * and logs also to console.
+ * @param {string} operation 
+ * @param {string} msg 
+ * @param {string} severity 
+ */
 const logger = (operation, msg, severity) => {
     const timeInUTC = new Date();
     let localTime = timeInUTC.toISOString().split('T')[0] + 'T' + timeInUTC.toLocaleTimeString();
