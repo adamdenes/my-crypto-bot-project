@@ -1,6 +1,6 @@
-const config = require("./config.json");
-const Client = require("./index");
-const { logger } = require("./log");
+const config = require('./config.json');
+const Client = require('./index');
+const { logger } = require('./log');
 
 
 const binance = new Client(config.apiKey, config.apiSecret);
@@ -8,7 +8,7 @@ let isNextOperationBuy = false;
 let lastOpPrice = 100.00
 
 const attemptToMakeTrade = async () => {
-    const promises = await Promise.all([binance.getMarketPrice("ETHBTC"), binance.getOperationDetails()]);
+    const promises = await Promise.all([binance.getMarketPrice('ETHBTC'), binance.getOperationDetails()]);
     const currentPrice = promises[0];
     const openTrades = promises[1];
 
@@ -49,7 +49,7 @@ const tryToBuy = (percentageDiff) => {
 
     if (percentageDiff >= binance.operation.BUY_UPWARD_TREND_THRESHOLD ||
         percentageDiff <= binance.operation.BUY_DIP_THRESHOLD) {
-        lastOpPrice = binance.placeBuyOrder("ETHBTC");
+        lastOpPrice = binance.placeBuyOrder('ETHBTC');
         isNextOperationBuy = false;
         logger('TRY-TO-BUY', `percentageDiff => '${percentageDiff}'`, 'INFO');
         return lastOpPrice;
@@ -68,7 +68,7 @@ const tryToSell = (percentageDiff) => {
 
     if (percentageDiff >= binance.operation.SELL_PROFIT_THRESHOLD ||
         percentageDiff <= binance.operation.SELL_STOP_LOSS_THRESHOLD) {
-        lastOpPrice = binance.placeSellOrder("ETHBTC");
+        lastOpPrice = binance.placeSellOrder('ETHBTC');
         isNextOperationBuy = true;
         logger('TRY-TO-SELL', `percentageDiff => '${percentageDiff}'`, 'INFO');
         return lastOpPrice;

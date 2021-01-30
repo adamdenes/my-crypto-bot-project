@@ -1,6 +1,6 @@
-const fetch = require("node-fetch");
-const crypto = require("crypto");
-const { logger } = require("./log");
+const fetch = require('node-fetch');
+const crypto = require('crypto');
+const { logger } = require('./log');
 
 
 class Client {
@@ -8,7 +8,7 @@ class Client {
         this.apiKey = apiKey;
         this.apiSecret = apiSecret;
         this.serverTime = 0;
-        this.base = "https://api.binance.com/";
+        this.base = 'https://api.binance.com/';
         this.order = {}; // for options see helper.js
         this.operation = {
             BUY: 0,
@@ -54,9 +54,9 @@ class Client {
 
     signature(query) {
         return crypto
-            .createHmac("sha256", this.apiSecret)
+            .createHmac('sha256', this.apiSecret)
             .update(query)
-            .digest("hex");
+            .digest('hex');
     }
 
     offset(server, date) {
@@ -67,21 +67,21 @@ class Client {
         return Object.keys(obj)
             .reduce((a, k) => {
                 if (obj[k] !== undefined) {
-                    a.push(k + "=" + encodeURIComponent(obj[k]));
+                    a.push(k + '=' + encodeURIComponent(obj[k]));
                 }
                 return a;
             }, [])
-            .join("&");
+            .join('&');
     }
 
     async priceInUSD(cryptoPriceInQuote) {
-        if (cryptoPriceInQuote === "BTCUSDT") {
+        if (cryptoPriceInQuote === 'BTCUSDT') {
             const currentPrice = await this.getMarketPrice(cryptoPriceInQuote);
             return +currentPrice.price;
         } else {
             const currentPrices = await Promise.all([
                 this.getMarketPrice(cryptoPriceInQuote),
-                this.getMarketPrice(cryptoPriceInQuote.slice(3) + "USDT"),
+                this.getMarketPrice(cryptoPriceInQuote.slice(3) + 'USDT'),
             ]);
 
             return currentPrices.reduce((acc, cp) => acc.price * cp.price);
@@ -90,18 +90,18 @@ class Client {
 
     async usdTotal() {
         const info = await Promise.all([
-            this.priceInUSD("BTCUSDT"),
-            this.priceInUSD("ETHBTC"),
+            this.priceInUSD('BTCUSDT'),
+            this.priceInUSD('ETHBTC'),
             this.getBalances()
         ]);
 
         let balanceInUSD = 0;
 
         info[2].forEach(element => {
-            if (element.asset === "BTC") {
+            if (element.asset === 'BTC') {
                 balanceInUSD += element.free * info[0];
             }
-            if (element.asset === "ETH") {
+            if (element.asset === 'ETH') {
                 balanceInUSD += element.free * info[1];
             }
         });
@@ -117,7 +117,7 @@ class Client {
                 const jsonResponse = await response.json();
                 return jsonResponse;
             }
-            throw new Error("Request failed!");
+            throw new Error('Request failed!');
         } catch (error) {
             logger('GET', `GET request failed ${error}`, 'error');
         }
@@ -130,7 +130,7 @@ class Client {
                 const jsonResponse = await response.json();
                 return jsonResponse;
             }
-            throw new Error("Request failed!");
+            throw new Error('Request failed!');
         } catch (error) {
             logger('POST', `POST request failed ${error}`, 'error');
         }
@@ -157,7 +157,7 @@ class Client {
         for (let i = 0; i < info.symbols.length; i++) {
             if (info.symbols[i].symbol.includes(sym)) {
                 for (let j = 0; j < info.symbols[i].filters.length; j++) {
-                    if (info.symbols[i].filters[j].filterType === "LOT_SIZE") {
+                    if (info.symbols[i].filters[j].filterType === 'LOT_SIZE') {
                         // console.log(info.symbols[i].filters[j]);
                         minQuantity = info.symbols[i].filters[j].minQty;
                     }
@@ -194,10 +194,10 @@ class Client {
             const response = await this.getRequest(
                 `${this.base}api/v3/account?${query}&signature=${signature}`,
                 {
-                    method: "GET",
+                    method: 'GET',
                     headers: {
-                        "X-MBX-APIKEY": this.apiKey,
-                        "Content-type": "x-www-form-urlencoded",
+                        'X-MBX-APIKEY': this.apiKey,
+                        'Content-type': 'x-www-form-urlencoded',
                     },
                 }
             );
@@ -208,13 +208,13 @@ class Client {
         }
     }
 
-    async testNewOrders(symbol, side, type = "LIMIT", timeInForce = "GTC") {
+    async testNewOrders(symbol, side, type = 'LIMIT', timeInForce = 'GTC') {
         const serverTime = await this.adjustTimestamp(this.getServerTime());
         const query = this.queryString({
-            symbol: "ETHBTC",
-            side: "SELL",
-            type: "LIMIT",
-            timeInForce: "GTC",
+            symbol: 'ETHBTC',
+            side: 'SELL',
+            type: 'LIMIT',
+            timeInForce: 'GTC',
             quantity: 1,
             price: 0.1,
             recvWindow: 5000,
@@ -225,10 +225,10 @@ class Client {
         const response = await this.postRequest(
             `${this.base}api/v3/order/test?${query}&signature=${sig}`,
             {
-                method: "POST",
+                method: 'POST',
                 headers: {
-                    "X-MBX-APIKEY": this.apiKey,
-                    "Content-type": "x-www-form-urlencoded",
+                    'X-MBX-APIKEY': this.apiKey,
+                    'Content-type': 'x-www-form-urlencoded',
                 },
             }
         );
@@ -249,8 +249,8 @@ class Client {
         }
     }
 
-    async getMarketPrice(symbol = "ETHBTC") {
-        const param = typeof symbol === "string" ? "?symbol=" + symbol : "";
+    async getMarketPrice(symbol = 'ETHBTC') {
+        const param = typeof symbol === 'string' ? '?symbol=' + symbol : '';
         const marketPrice = await this.getRequest(
             `${this.base}api/v3/ticker/price${param}`
         );
@@ -259,7 +259,7 @@ class Client {
         return marketPrice;
     }
 
-    async placeSellOrder(sym = "ETHBTC", sell = "SELL", orderType = "LIMIT", tif = "GTC") {
+    async placeSellOrder(sym = 'ETHBTC', sell = 'SELL', orderType = 'LIMIT', tif = 'GTC') {
         logger('SELL-ORDER', `Attempt to sell: ${sym}`, 'info');
 
         try {
@@ -310,10 +310,10 @@ class Client {
             const response = await this.postRequest(
                 `${this.base}api/v3/order?${query}&signature=${sig}`,
                 {
-                    method: "POST",
+                    method: 'POST',
                     headers: {
-                        "X-MBX-APIKEY": this.apiKey,
-                        "Content-type": "x-www-form-urlencoded",
+                        'X-MBX-APIKEY': this.apiKey,
+                        'Content-type': 'x-www-form-urlencoded',
                     },
                 }
             );
@@ -324,7 +324,7 @@ class Client {
         }
     }
 
-    async placeBuyOrder(sym = "ETHBTC", buy = "BUY", orderType = "LIMIT", tif = "GTC") {
+    async placeBuyOrder(sym = 'ETHBTC', buy = 'BUY', orderType = 'LIMIT', tif = 'GTC') {
         logger('BUY-ORDER', `Attempt to buy: ${sym}`, 'info');
 
         try {
@@ -376,10 +376,10 @@ class Client {
             const response = await this.postRequest(
                 `${this.base}api/v3/order?${query}&signature=${sig}`,
                 {
-                    method: "POST",
+                    method: 'POST',
                     headers: {
-                        "X-MBX-APIKEY": this.apiKey,
-                        "Content-type": "x-www-form-urlencoded",
+                        'X-MBX-APIKEY': this.apiKey,
+                        'Content-type': 'x-www-form-urlencoded',
                     },
                 }
             );
@@ -404,10 +404,10 @@ class Client {
             const response = await this.postRequest(
                 `${this.base}api/v3/order?${query}&signature=${sig}`,
                 {
-                    method: "DELETE",
+                    method: 'DELETE',
                     headers: {
-                        "X-MBX-APIKEY": this.apiKey,
-                        "Content-type": "x-www-form-urlencoded",
+                        'X-MBX-APIKEY': this.apiKey,
+                        'Content-type': 'x-www-form-urlencoded',
                     },
                 }
             );
@@ -427,10 +427,10 @@ class Client {
             const response = await this.getRequest(
                 `${this.base}api/v3/openOrders?${query}&signature=${sig}`,
                 {
-                    method: "GET",
+                    method: 'GET',
                     headers: {
-                        "X-MBX-APIKEY": this.apiKey,
-                        "Content-type": "x-www-form-urlencoded",
+                        'X-MBX-APIKEY': this.apiKey,
+                        'Content-type': 'x-www-form-urlencoded',
                     },
                 }
             );
@@ -453,9 +453,9 @@ module.exports = Client;
 // client.getBalances().then((mp) => console.log(mp));
 // client.getMarketPrice('ETHBTC').then((mp) => console.log(mp));
 // client.testNewOrders().then((mp) => console.log(mp));
-// client.priceInUSD("ETHBTC").then((mp) => console.log(mp));
+// client.priceInUSD('ETHBTC').then((mp) => console.log(mp));
 
-// client.placeSellOrder("ETHBTC").then((mp) => console.log(mp));
-// client.placeBuyOrder("ETHBTC").then((mp) => console.log(mp));
+// client.placeSellOrder('ETHBTC').then((mp) => console.log(mp));
+// client.placeBuyOrder('ETHBTC').then((mp) => console.log(mp));
 // client.cancelOrder(client.getOperationDetails()).then((mp) => console.log(mp));
 // client.getOperationDetails().then((mp) => console.log(mp));
