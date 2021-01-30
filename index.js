@@ -254,7 +254,7 @@ class Client {
         const marketPrice = await this.getRequest(
             `${this.base}api/v3/ticker/price${param}`
         );
-        logger('PRICE', `GET getMarketPrice() success, asset => ${marketPrice.symbol}, price => ${marketPrice.price}`, 'info');
+        // logger('PRICE', `GET getMarketPrice() success, asset => ${marketPrice.symbol}, price => ${marketPrice.price}`, 'info');
 
         return marketPrice;
     }
@@ -282,6 +282,7 @@ class Client {
 
             logger('SELL-ORDER', `Quote: ${priceInfo[1][0].asset} - Free: ${quote}`, 'info');
             logger('SELL-ORDER', `Available: ${freeCrypto}`, 'info');
+            logger('SELL-ORDER', `Price in USD: ${priceInfo[0]}`, 'info');
             logger('SELL-ORDER', `Marketprice: ${marketPrice}`, 'info');
             logger('SELL-ORDER', `Quantity: ${+(freeCrypto * 0.02).toFixed(3)}`, 'info');
             logger('SELL-ORDER', `Quantity * Price: ${+(freeCrypto * 0.02).toFixed(3) * marketPrice}`, 'info');
@@ -348,6 +349,7 @@ class Client {
             
             logger('BUY-ORDER', `Quote: ${priceInfo[1][0].asset} - Free: ${quote}`, 'info');
             logger('BUY-ORDER', `Available: ${freeCrypto}`, 'info');
+            logger('BUY-ORDER', `Price in USD: ${priceInfo[0]}`, 'info');
             logger('BUY-ORDER', `Marketprice: ${marketPrice}`, 'info');
             logger('BUY-ORDER', `Quantity: ${+(freeCrypto * 0.02).toFixed(3)}`, 'info');
             logger('BUY-ORDER', `Quantity * Price: ${+(freeCrypto * 0.02).toFixed(3) * marketPrice}`, 'info');
