@@ -286,6 +286,7 @@ class Client {
             logger('SELL-ORDER', `Marketprice: ${marketPrice}`, 'info');
             logger('SELL-ORDER', `Quantity: ${+(freeCrypto * 0.02).toFixed(3)}`, 'info');
             logger('SELL-ORDER', `Quantity * Price: ${+(freeCrypto * 0.02).toFixed(3) * marketPrice}`, 'info');
+            logger('SELL-ORDER', `Quantity * Price USD: ${ (+(freeCrypto * 0.02).toFixed(3) * marketPrice) * priceInfo[0] }`, 'info');
             logger('SELL-ORDER', `Profit Target: ${+pt.toFixed(6)}`, 'info');
             logger('SELL-ORDER', `Minimum Quantity: ${minQuantity}`, 'info');
             logger('SELL-ORDER', `Minimum Quantity < Quantity : ${minQuantity < +(freeCrypto * 0.02).toFixed(3)}`, 'INFO');
@@ -352,7 +353,7 @@ class Client {
             logger('BUY-ORDER', `Price in USD: ${priceInfo[0]}`, 'info');
             logger('BUY-ORDER', `Marketprice: ${marketPrice}`, 'info');
             logger('BUY-ORDER', `Quantity: ${+(freeCrypto * 0.02).toFixed(3)}`, 'info');
-            logger('BUY-ORDER', `Quantity * Price: ${+(freeCrypto * 0.02).toFixed(3) * marketPrice}`, 'info');
+            logger('BUY-ORDER', `Quantity * Price: ${ (+(freeCrypto * 0.02).toFixed(3) * marketPrice) * priceInfo[0] }`, 'info');
             logger('BUY-ORDER', `Profit Target: ${+pt.toFixed(6)}`, 'info');
             logger('BUY-ORDER', `Minimum Quantity: ${minQuantity}`, 'info');
             logger('BUY-ORDER', `Minimum Quantity < Quantity : ${minQuantity < +(freeCrypto * 0.02).toFixed(3)}`, 'INFO');
