@@ -7,14 +7,19 @@ const process = require('process');
  * @param {number} price 
  */
 const updateConfig = (data, price) => {
+    if (price === data.lastPrice) {
+        console.log('Update is not necessary.')
+        return;
+    }
+
     data.lastPrice = price;
     const jsonString = JSON.stringify(data);
 
     fs.writeFile('./config.json', jsonString, (err) => {
         if (err) {
-            console.log('Error writing file.', err);
+            console.log('Error updating file.', err);
         } else {
-            console.log('Successfully wrote file.');
+            console.log('Successfully updated file.');
         }
     })
 };

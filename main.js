@@ -8,8 +8,9 @@ const binance = new Client(config.apiKey, config.apiSecret);
 const UPWARD_TREND_THRESHOLD = 1.5;
 const DIP_THRESHOLD = -2.25;
 // SELL
-const PROFIT_THRESHOLD = 1.00;
+const PROFIT_THRESHOLD = 1.25;
 const STOP_LOSS_THRESHOLD = -2.00;
+
 let isNextOperationBuy = binance.operation.SELL;
 let lastOpPrice = config.lastPrice;
 
@@ -30,7 +31,7 @@ const attemptToMakeTrade = async () => {
     }
 
     let percentageDiff = (Number(currentPrice.price) - Number(lastOpPrice)) / Number(lastOpPrice) * 100;
-    console.log(+lastOpPrice)
+    // console.log(+lastOpPrice)
     // console.log(+percentageDiff)
     // console.log(+currentPrice.price)
     // console.log(typeof lastOpPrice)
@@ -96,8 +97,8 @@ const startBot = async () => {
         try {
             logger('SYSTEM', `Looking for trade...`, 'info');
             await attemptToMakeTrade();
-            logger('SYSTEM', `Trade ongoing, sleeping...`, 'info');
-            await sleep(10000);
+            logger('SYSTEM', `Sleeping for 30 sec...`, 'info');
+            await sleep(30000);
         } catch (critical) {
             logger('SYSTEM', `BOT failed, FATAL ERROR => '${critical}'`, 'CRITICAL');
         }
