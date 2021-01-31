@@ -75,7 +75,7 @@ class Client {
     }
 
     async priceInUSD(cryptoPriceInQuote) {
-        if (cryptoPriceInQuote === 'BTCUSDT') {
+        if (cryptoPriceInQuote.includes('USDT')) {
             const currentPrice = await this.getMarketPrice(cryptoPriceInQuote);
             return +currentPrice.price;
         } else {
@@ -105,7 +105,7 @@ class Client {
                 balanceInUSD += element.free * info[1];
             }
         });
-        logger('BALANCE', `balance => '$${balanceInUSD.toFixed(2)}'`, 'info');
+        // logger('BALANCE', `balance => '$${balanceInUSD.toFixed(2)}'`, 'info');
 
         return balanceInUSD;
     }
@@ -415,7 +415,7 @@ class Client {
                     },
                 }
             );
-            logger('CANCEL-ORDER', `GET cancelOrder() success, orderId => '${query.orderId}'`, 'error');
+            // logger('CANCEL-ORDER', `GET cancelOrder() success, orderId => '${query.orderId}'`, 'error');
             return response;
         } catch (error) {
             logger('CANCEL-ORDER', `GET cancelOrder() failed => '${error}'`, 'error');
