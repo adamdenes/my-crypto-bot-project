@@ -11,7 +11,7 @@ const DIP_THRESHOLD = -2.25;
 const PROFIT_THRESHOLD = 1.25;
 const STOP_LOSS_THRESHOLD = -2.00;
 
-let isNextOperationBuy = binance.operation.SELL;
+let isNextOperationBuy = binance.operation.BUY;
 let lastOpPrice = config.lastPrice;
 
 
@@ -95,9 +95,9 @@ const startBot = async () => {
 
     while (binance) {
         try {
-            logger('SYSTEM', `Looking for trade...`, 'info');
+            // logger('SYSTEM', `Looking for trade...`, 'info');
             await attemptToMakeTrade();
-            logger('SYSTEM', `Sleeping for 30 sec...`, 'info');
+            // logger('SYSTEM', `Sleeping for 30 sec...`, 'info');
             await sleep(30000);
         } catch (critical) {
             logger('SYSTEM', `BOT failed, FATAL ERROR => '${critical}'`, 'CRITICAL');
