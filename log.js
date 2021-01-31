@@ -1,6 +1,26 @@
 const fs = require('fs');
 const process = require('process');
+const config = require('./config.json');
 
+
+/**
+ * Rewrite the config with the latest operation price.
+ * @param {object} data 
+ * @param {number} price 
+ */
+const updateConfig = (data, price) => {
+    console.log(data, price);
+    data.lastPrice = price;
+    const jsonString = JSON.stringify(data);
+
+    fs.writeFile('./config.json', jsonString, (err) => {
+        if (err) {
+            console.log('Error writing file.', err);
+        } else {
+            console.log('Successfully wrote file.');
+        }
+    })
+};
 
 /**
  * Iterate over the current directory and
