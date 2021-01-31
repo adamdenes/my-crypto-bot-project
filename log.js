@@ -1,7 +1,5 @@
 const fs = require('fs');
 const process = require('process');
-const config = require('./config.json');
-
 
 /**
  * Rewrite the config with the latest operation price.
@@ -9,7 +7,6 @@ const config = require('./config.json');
  * @param {number} price 
  */
 const updateConfig = (data, price) => {
-    console.log(data, price);
     data.lastPrice = price;
     const jsonString = JSON.stringify(data);
 
@@ -80,4 +77,4 @@ const logger = (operation, msg, severity) => {
     logToFile(data);
 };
 
-module.exports = { logger };
+module.exports = { logger, updateConfig };

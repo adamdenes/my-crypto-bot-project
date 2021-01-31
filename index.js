@@ -11,8 +11,8 @@ class Client {
         this.base = 'https://api.binance.com/';
         this.order = {}; // for options see helper.js
         this.operation = {
-            BUY: 0,
-            SELL: 1,
+            BUY: true,
+            SELL: false,
             BUY_DIP_THRESHOLD: 0.02, // buy if price decreased more than TH
             BUY_UPWARD_TREND_THRESHOLD: 0.05, // buy if price increased more than TH
             SELL_PROFIT_THRESHOLD: 0.02, // sell if price increased above TH
@@ -276,19 +276,20 @@ class Client {
             const marketPrice = priceInfo[2].price;
             const serverTime = priceInfo[3];
             let pt = +marketPrice + marketPrice * this.operation.SELL_PROFIT_THRESHOLD;
-            // let sl = +marketPrice - (marketPrice * this.operation.SELL_STOP_LOSS_THRESHOLD);
+            let sl = +marketPrice - (marketPrice * this.operation.SELL_STOP_LOSS_THRESHOLD);
             let minQuantity = priceInfo[4];
             let priceQuantity = +(freeCrypto * 0.02).toFixed(3) * marketPrice;
 
-            logger('SELL-ORDER', `Quote: ${priceInfo[1][0].asset} - Free: ${quote}`, 'info');
-            logger('SELL-ORDER', `Available: ${freeCrypto}`, 'info');
-            logger('SELL-ORDER', `Price in USD: ${priceInfo[0]}`, 'info');
-            logger('SELL-ORDER', `Marketprice: ${marketPrice} = $${priceInfo[0] * marketPrice}`, 'info');
-            logger('SELL-ORDER', `Quantity: ${+(freeCrypto * 0.02).toFixed(3)}`, 'info');
-            logger('SELL-ORDER', `Quantity * Price: ${+(freeCrypto * 0.02).toFixed(3) * marketPrice}`, 'info');
-            logger('SELL-ORDER', `Profit Target: ${+pt.toFixed(6)} = $${priceInfo[0] * +pt.toFixed(6)}`, 'info');
-            logger('SELL-ORDER', `Minimum Quantity: ${minQuantity}`, 'info');
-            logger('SELL-ORDER', `Minimum Quantity < Quantity : ${minQuantity < +(freeCrypto * 0.02).toFixed(3)}`, 'INFO');
+            logger('SELL-ORDER', `Quote: ${priceInfo[1][0].asset} - Free: ${quote}`, 'debug');
+            logger('SELL-ORDER', `Available: ${freeCrypto}`, 'debug');
+            logger('SELL-ORDER', `Price in USD: ${priceInfo[0]}`, 'debug');
+            logger('SELL-ORDER', `Marketprice: ${marketPrice} = $${priceInfo[0] * marketPrice}`, 'debug');
+            logger('SELL-ORDER', `Quantity: ${+(freeCrypto * 0.02).toFixed(3)}`, 'debug');
+            logger('SELL-ORDER', `Quantity * Price: ${+(freeCrypto * 0.02).toFixed(3) * marketPrice}`, 'debug');
+            logger('SELL-ORDER', `Profit Target: ${+pt.toFixed(6)} = $${priceInfo[0] * +pt.toFixed(6)}`, 'debug');
+            logger('SELL-ORDER', `Stop Loss: ${+sl.toFixed(6)} = $${priceInfo[0] * +sl.toFixed(6)}`, 'debug');
+            logger('SELL-ORDER', `Minimum Quantity: ${minQuantity}`, 'debug');
+            logger('SELL-ORDER', `Minimum Quantity < Quantity : ${minQuantity < +(freeCrypto * 0.02).toFixed(3)}`, 'debug');
 
             // if price * quantity > available balance 
             if (priceQuantity > freeCrypto) {
@@ -318,7 +319,7 @@ class Client {
                     },
                 }
             );
-            logger('SELL-ORDER', `GET placeSellOrder() success, SELL price => '${response.price}'`, 'warning');
+            logger('SELL-ORDER', `GET placeSellOrder() success, SELL price => '${response.price} = $${(response.price * priceInfo[0]).toFixed(2)}'`, 'warning');
             return response.price;
         } catch (error) {
             logger('SELL-ORDER', `GET placeSellOrder() failed => '${error}'`, 'error');
@@ -342,19 +343,21 @@ class Client {
             const marketPrice = priceInfo[2].price;
             const serverTime = priceInfo[3];
             let pt = +marketPrice - marketPrice * this.operation.BUY_DIP_THRESHOLD;
-            // let sl = +marketPrice + (marketPrice * this.operation.BUY_UPWARD_TREND_THRESHOLD);
+            let sl = +marketPrice + (marketPrice * this.operation.BUY_UPWARD_TREND_THRESHOLD);
             let minQuantity = priceInfo[4];
             let priceQuantity = +(freeCrypto * 0.02).toFixed(3) * marketPrice;
 
             
-            logger('BUY-ORDER', `Quote: ${priceInfo[1][0].asset} - Free: ${quote}`, 'info');
-            logger('BUY-ORDER', `Available: ${freeCrypto}`, 'info');
-            logger('BUY-ORDER', `Price in USD: ${priceInfo[0]}`, 'info');
-            logger('BUY-ORDER', `Marketprice: ${marketPrice} = $${priceInfo[0] * marketPrice}`, 'info');
-            logger('BUY-ORDER', `Quantity: ${+(freeCrypto * 0.02).toFixed(3)}`, 'info');
-            logger('BUY-ORDER', `Profit Target: ${+pt.toFixed(6)} = $${priceInfo[0] * +pt.toFixed(6)}`, 'info');
-            logger('BUY-ORDER', `Minimum Quantity: ${minQuantity}`, 'info');
-            logger('BUY-ORDER', `Minimum Quantity < Quantity : ${minQuantity < +(freeCrypto * 0.02).toFixed(3)}`, 'INFO');
+            logger('BUY-ORDER', `Quote: ${priceInfo[1][0].asset} - Free: ${quote}`, 'debug');
+            logger('BUY-ORDER', `Available: ${freeCrypto}`, 'debug');
+            logger('BUY-ORDER', `Price in USD: ${priceInfo[0]}`, 'debug');
+            logger('BUY-ORDER', `Marketprice: ${marketPrice} = $${priceInfo[0] * marketPrice}`, 'debug');
+            logger('BUY-ORDER', `Quantity: ${+(freeCrypto * 0.02).toFixed(3)}`, 'debug');
+            logger('BUY-ORDER', `Quantity * Price: ${+(freeCrypto * 0.02).toFixed(3) * marketPrice}`, 'debug');
+            logger('BUY-ORDER', `Profit Target: ${+pt.toFixed(6)} = $${priceInfo[0] * +pt.toFixed(6)}`, 'debug');
+            logger('BUY-ORDER', `Stop Loss: ${+sl.toFixed(6)} = $${priceInfo[0] * +sl.toFixed(6)}`, 'debug');
+            logger('BUY-ORDER', `Minimum Quantity: ${minQuantity}`, 'debug');
+            logger('BUY-ORDER', `Minimum Quantity < Quantity : ${minQuantity < +(freeCrypto * 0.02).toFixed(3)}`, 'debug');
             
             // if price * quantity > available balance 
             if (priceQuantity > quote) {
@@ -384,7 +387,7 @@ class Client {
                     },
                 }
             );
-            logger('BUY-ORDER', `GET placeBuyOrder() success, BUY price => '${response.price}'`, 'warning');
+            logger('BUY-ORDER', `GET placeBuyOrder() success, BUY price => '${response.price} = $${(response.price * priceInfo[0]).toFixed(2)}'`, 'warning');
             return response.price;
         } catch (error) {
             logger('BUY-ORDER', `GET placeBuyOrder() failed => '${error}'`, 'error');
