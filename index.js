@@ -444,14 +444,46 @@ class Client {
             logger('OPERATION-DETAILS', `GET getOperationDetails() failed => '${error}'`, 'error');
         }
     }
+
+    async getCandlestickData(sym, interval) {
+        try {
+            // get the current time in epoch 2 years back from now
+            const twoYearsBefore = new Date().setFullYear(new Date().getFullYear() - 2);
+            const query = this.queryString({ symbol: sym, interval: interval, startTime: twoYearsBefore });
+
+            const response = await this.getRequest(
+                `${this.base}api/v3/klines?${query}`,
+                {
+                    method: 'GET',
+                    headers: {
+                        'X-MBX-APIKEY': this.apiKey,
+                        'Content-type': 'x-www-form-urlencoded',
+                    },
+                }
+            );
+            
+            return response;
+        } catch (error) {
+            logger('KLINE', `GET getCandelsticData() failed => '${error}'`, 'error');
+        }
+    }
+
+    async downloadCandelSticks(sym, interval) {
+        const sticks = await this.getCandelsticData(sym, interval);
+        // TODO: download all data until today
+        while (sticks) {
+            
+        }
+    }
 }
 
 module.exports = Client;
 
-// const client = new Client(config.apiKey, config.apiSecret);
+const client = new Client("A5mPt8jhc8P0Y6R7Syw92qOsWSUc4bt6WHNWq4ybQfaUkrHm4hYRrWVDSZEGMTL5", "Ebm8PchftaSSTYHJEhH6llIxJmwufnfIhEf5FsWe9WbZT7bhDKSg3ycYjmGUO781");
 
 // ##################### TESTING CLASS METHODS #####################
 
+client.getCandlestickData('ETHBTC', '4h').then((mp) => console.log(mp));
 // client.getAccountInfo().then((mp) => console.log(mp));
 // client.exchangeInfo().then((mp) => console.log(mp));
 // client.getBalances().then((mp) => console.log(mp));
