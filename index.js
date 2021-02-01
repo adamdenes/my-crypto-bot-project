@@ -1,6 +1,7 @@
 const fetch = require('node-fetch');
 const crypto = require('crypto');
 const { logger } = require('./log');
+const config = require('./config.json');
 
 
 class Client {
@@ -469,21 +470,29 @@ class Client {
     }
 
     async downloadCandelSticks(sym, interval) {
-        const sticks = await this.getCandelsticData(sym, interval);
-        // TODO: download all data until today
-        while (sticks) {
-            
+        const sticks = await this.getCandlestickData(sym, interval);
+        const today = new Date(new Date().getTime()).toDateString();
+        const currentDateIteration = new Date(sticks[0][6]).toDateString();
+        
+        let data = [];
+
+        while (today) {
+            if (today !== currentDateIteration){
+                data.push(await this.getCandlestickData(sym, interval));
+                console.log(data)
+            }
         }
     }
 }
 
 module.exports = Client;
 
-const client = new Client("A5mPt8jhc8P0Y6R7Syw92qOsWSUc4bt6WHNWq4ybQfaUkrHm4hYRrWVDSZEGMTL5", "Ebm8PchftaSSTYHJEhH6llIxJmwufnfIhEf5FsWe9WbZT7bhDKSg3ycYjmGUO781");
+const client = new Client(config.apiKey, config.apiSecret);
 
 // ##################### TESTING CLASS METHODS #####################
 
-client.getCandlestickData('ETHBTC', '4h').then((mp) => console.log(mp));
+// client.getCandlestickData('ETHBTC', '1d').then((mp) => console.log(mp));
+client.downloadCandelSticks('ETHBTC', '1d').then((mp) => console.log(mp));
 // client.getAccountInfo().then((mp) => console.log(mp));
 // client.exchangeInfo().then((mp) => console.log(mp));
 // client.getBalances().then((mp) => console.log(mp));
