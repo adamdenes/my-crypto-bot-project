@@ -2,6 +2,7 @@ const fetch = require('node-fetch');
 const crypto = require('crypto');
 const { logger } = require('./log');
 const config = require('./config.json');
+const { start } = require('repl');
 
 
 class Client {
@@ -446,11 +447,9 @@ class Client {
         }
     }
 
-    async getCandlestickData(sym, interval) {
+    async getCandlestickData(sym, interval, startTime = new Date().getFullYear()) {
         try {
-            // get the current time in epoch 2 years back from now
-            const twoYearsBefore = new Date().setFullYear(new Date().getFullYear() - 2);
-            const query = this.queryString({ symbol: sym, interval: interval, startTime: twoYearsBefore });
+            const query = this.queryString({ symbol: sym, interval: interval, startTime: startTime, limit: 1000});
 
             const response = await this.getRequest(
                 `${this.base}api/v3/klines?${query}`,
@@ -462,26 +461,43 @@ class Client {
                     },
                 }
             );
-            
             return response;
         } catch (error) {
             logger('KLINE', `GET getCandelsticData() failed => '${error}'`, 'error');
         }
     }
 
-    async downloadCandelSticks(sym, interval) {
-        const sticks = await this.getCandlestickData(sym, interval);
-        const today = new Date(new Date().getTime()).toDateString();
-        const currentDateIteration = new Date(sticks[0][6]).toDateString();
+    async downloadCandelSticks(sym, interval, startTime = 2) {
+        // get the current time 2 years back from now
+        const date = new Date();
+        const today = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 24, 59, 59, 999);
+        const twoYearsBefore = new Date().setFullYear(new Date().getFullYear() - startTime);
+        let sticks = await this.getCandlestickData(sym, interval, twoYearsBefore);
+        let lastDateIteration = new Date(sticks[sticks.length - 1][6]);
         
         let data = [];
+        data.push(sticks)
+        console.log(today);
+        console.log(lastDateIteration);
+        console.log(data[0][data.length - 1]);
 
-        while (today) {
-            if (today !== currentDateIteration){
-                data.push(await this.getCandlestickData(sym, interval));
-                console.log(data)
+        while (lastDateIteration != today) {
+            try {
+                data.push(await this.getCandlestickData(sym, interval, Date.parse(lastDateIteration)));
+
+                if(typeof lastDateIteration === undefined) {
+                    return data;
+                }
+                lastDateIteration = new Date(data[0][data.length - 1][6]);
+                console.log(lastDateIteration);
+            } catch (error) {
+                console.error('Error: ' + error);
             }
         }
+        
+        console.log(data);
+        console.log(data[0][data.length - 1]);
+        return data;
     }
 }
 
@@ -492,7 +508,7 @@ const client = new Client(config.apiKey, config.apiSecret);
 // ##################### TESTING CLASS METHODS #####################
 
 // client.getCandlestickData('ETHBTC', '1d').then((mp) => console.log(mp));
-client.downloadCandelSticks('ETHBTC', '1d').then((mp) => console.log(mp));
+client.downloadCandelSticks('ETHBTC', '1d', 1).then((mp) => console.log(mp));
 // client.getAccountInfo().then((mp) => console.log(mp));
 // client.exchangeInfo().then((mp) => console.log(mp));
 // client.getBalances().then((mp) => console.log(mp));
