@@ -56,8 +56,6 @@ const attemptToMakeTrade = async () => {
     }
 };
 
-const sleep = ms => new Promise((resolve) => setTimeout(resolve, ms));
-
 const tryToBuy = (percentageDiff) => {
 
     logger('LOGIC', 'UPWARD_TREND_THRESHOLD = ' + UPWARD_TREND_THRESHOLD, 'debug');
@@ -98,7 +96,7 @@ const startBot = async () => {
             // logger('SYSTEM', `Looking for trade...`, 'info');
             await attemptToMakeTrade();
             // logger('SYSTEM', `Sleeping for 30 sec...`, 'info');
-            await sleep(30000);
+            await binance.sleep(30000);
         } catch (critical) {
             logger('SYSTEM', `BOT failed, FATAL ERROR => '${critical}'`, 'CRITICAL');
         }

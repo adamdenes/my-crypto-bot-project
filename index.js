@@ -2,7 +2,6 @@ const fetch = require('node-fetch');
 const crypto = require('crypto');
 const { logger } = require('./log');
 const config = require('./config.json');
-const { start } = require('repl');
 
 
 class Client {
@@ -52,6 +51,10 @@ class Client {
 
     set order(newOrderObject) {
         this._order = newOrderObject;
+    }
+
+    sleep(ms) {
+        return new Promise((resolve) => setTimeout(resolve, ms));
     }
 
     signature(query) {
@@ -349,7 +352,7 @@ class Client {
             let minQuantity = priceInfo[4];
             let priceQuantity = +(freeCrypto * 0.02).toFixed(3) * marketPrice;
 
-            
+
             logger('BUY-ORDER', `Quote: ${priceInfo[1][0].asset} - Free: ${quote}`, 'debug');
             logger('BUY-ORDER', `Available: ${freeCrypto}`, 'debug');
             logger('BUY-ORDER', `Price in USD: ${priceInfo[0]}`, 'debug');
@@ -360,7 +363,7 @@ class Client {
             logger('BUY-ORDER', `Stop Loss: ${+sl.toFixed(6)} = $${priceInfo[0] * +sl.toFixed(6)}`, 'debug');
             logger('BUY-ORDER', `Minimum Quantity: ${minQuantity}`, 'debug');
             logger('BUY-ORDER', `Minimum Quantity < Quantity : ${minQuantity < +(freeCrypto * 0.02).toFixed(3)}`, 'debug');
-            
+
             // if price * quantity > available balance 
             if (priceQuantity > quote) {
                 logger('BUY-ORDER', `Insufficient balance : ${quote}`, 'CRITICAL');
@@ -449,7 +452,7 @@ class Client {
 
     async getCandlestickData(sym, interval, startTime = new Date().getFullYear()) {
         try {
-            const query = this.queryString({ symbol: sym, interval: interval, startTime: startTime, limit: 1000});
+            const query = this.queryString({ symbol: sym, interval: interval, startTime: startTime, limit: 1000 });
 
             const response = await this.getRequest(
                 `${this.base}api/v3/klines?${query}`,
@@ -474,30 +477,33 @@ class Client {
         const twoYearsBefore = new Date().setFullYear(new Date().getFullYear() - startTime);
         let sticks = await this.getCandlestickData(sym, interval, twoYearsBefore);
         let lastDateIteration = new Date(sticks[sticks.length - 1][6]);
-        
+
         let data = [];
         data.push(sticks)
-        console.log(today);
+        // console.log(today);
         console.log(lastDateIteration);
-        console.log(data[0][data.length - 1]);
 
         while (lastDateIteration != today) {
+            // console.log(`today = ${today}`)
+            // console.log(`lastDateIteration = ${lastDateIteration}`)
+            // console.log(`lastDateIteration != today ==>> ${lastDateIteration != today}`)
             try {
-                data.push(await this.getCandlestickData(sym, interval, Date.parse(lastDateIteration)));
-
-                if(typeof lastDateIteration === 'undefined') {
-                    return data;
-                }
+                sticks = await this.getCandlestickData(sym, interval, Date.parse(lastDateIteration));
+                await this.sleep(1000);
+                data.push(sticks);
                 lastDateIteration = new Date(data[0][data.length - 1][6]);
+                
+                if (typeof lastDateIteration === 'undefined') {
+                    break;
+                }
                 console.log(lastDateIteration);
             } catch (error) {
                 console.error('Error: ' + error);
                 break;
             }
         }
-        
-        console.log(data);
-        console.log(data[0][data.length - 1]);
+        // console.log(data);
+        // console.log(data[0][data.length - 1]);
         return data;
     }
 }
