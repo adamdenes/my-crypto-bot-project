@@ -450,9 +450,9 @@ class Client {
         }
     }
 
-    async getCandlestickData(sym, interval, startTime = new Date().getFullYear()) {
+    async getCandlestickData(sym, interval, startTime, endTime) {
         try {
-            const query = this.queryString({ symbol: sym, interval: interval, startTime: startTime });
+            const query = this.queryString({ symbol: sym, interval: interval, startTime: startTime, endTime: endTime});
 
             const response = await this.getRequest(
                 `${this.base}api/v3/klines?${query}`,
@@ -470,55 +470,49 @@ class Client {
         }
     }
 
-    async downloadCandelSticks(sym, interval, startTime = 2) {
+    async downloadCandelSticks(sym, interval, startTime) {
         // get the current time 2 years back from now
         const date = new Date();
-        const today = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 24, 59, 59, 999);
-        const twoYearsBefore = new Date().setFullYear(new Date().getFullYear() - startTime);
-        let sticks = await this.getCandlestickData(sym, interval, twoYearsBefore);
-        let lastDateIteration = new Date(sticks[sticks.length - 1][6]);
+        const end = Date.parse(new Date(date.getFullYear(), date.getMonth(), date.getDate() -1, 24, 59, 59, 999)) + 999;
+        let start = new Date().setFullYear(new Date().getFullYear() - startTime);
+        let sticks = await this.getCandlestickData(sym, interval, start, end);
 
-        // 500 data is queried by default, 1 year is 365 days, so I need more iterations
+        let lastDateIteration = sticks[sticks.length - 1][6];
         let data = [];
-        do {
-            if (sticks.length >= 365) {
-                data.push(sticks);
-            }
 
-            try {
-                // Date.parse(x) deletes the last 3 zeros, '000'
-                sticks = await this.getCandlestickData(sym, interval, (Date.parse(lastDateIteration) + 999));
-                console.log(typeof sticks)
-                console.log(Date.parse(lastDateIteration) + 999);
-                await this.sleep(1000);
-                data.push(sticks);
-                lastDateIteration = new Date(data[0][data.length - 1][6]);
-                
-                if (typeof lastDateIteration === 'undefined') {
-                    break;
-                }
-                console.log(lastDateIteration);
-            } catch (error) {
-                console.error('Error: ' + error);
-                break;
-            }
-        } while (lastDateIteration.toString() != today.toString())
-        // console.log(data);
-        // console.log(data[0][data.length - 1]);
-        return data;
+        if (sticks.length <= 366) {
+            console.log('LAST: ' + lastDateIteration);
+            console.log('START: ' + start);
+            console.log('END: ' + end);
+            data.push(sticks)
+        }
+
+        while (end !== lastDateIteration) {
+            start = lastDateIteration;
+            console.log('LAST: ' + lastDateIteration);
+            console.log('START: ' + start);
+            console.log('END: ' + end);
+            sticks = await this.getCandlestickData(sym, interval, start, end);
+            data.push(sticks)
+
+            lastDateIteration = sticks[sticks.length - 1][6];
+            await this.sleep(1000);
+        }
+
+        writeData(data, sym, interval, 'w');
+        // return data;
     }
 }
 
 module.exports = Client;
 
-const client = new Client(config.apiKey, config.apiSecret);
+// const client = new Client(config.apiKey, config.apiSecret);
 
 // ##################### TESTING CLASS METHODS #####################
-client.arrayToKlineObj(Promise.resolve(client.getCandlestickData('ETHBTC', '1d', 1)));
-// writeData(client.downloadCandelSticks('ETHBTC', '1d', 1), 'ETHBTC', '1d');
-// client.downloadCandelSticks('ETHBTC', '1d', 2).then((mp) => console.log(mp));
+// writeData(client.getCandlestickData('ETHBTC', '1d', new Date().setFullYear(new Date().getFullYear() - 2), Date.now()), 'ETHBTC', '1d', 'w');
+// client.downloadCandelSticks('ETHBTC', '1w', 3).then((mp) => console.log(mp));
 
-// client.getCandlestickData('ETHBTC', '1d').then((mp) => console.log(mp));
+// client.getCandlestickData('ETHBTC', '1d', new Date().setFullYear(new Date().getFullYear() - 2), Date.now()).then((mp) => console.log(mp));
 // client.getAccountInfo().then((mp) => console.log(mp));
 // client.exchangeInfo().then((mp) => console.log(mp));
 // client.getBalances().then((mp) => console.log(mp));

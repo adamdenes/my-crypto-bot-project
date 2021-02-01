@@ -1,12 +1,10 @@
 const fs = require('fs');
 const process = require('process');
 
-const writeData = async (data, symbol = 'ETHBTC', interval) => {
+const writeData = async (data, symbol = 'ETHBTC', interval, flag) => {
     const jsonString = JSON.stringify(await data);
 
-    console.log(jsonString)
-
-    fs.writeFile(`./backtest/${symbol}_${interval}.json`, jsonString, {flag: 'w'}, (err) => {
+    fs.writeFile(`./backtest/${symbol}_${interval}.json`, jsonString, {flag: flag}, (err) => {
         if (err) {
             console.log('Error creating file.', err);
         } else {
