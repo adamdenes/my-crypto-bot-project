@@ -1,6 +1,6 @@
 const fetch = require('node-fetch');
 const crypto = require('crypto');
-const { logger } = require('./log');
+const { logger, writeData } = require('./log');
 const config = require('./config.json');
 
 
@@ -452,7 +452,7 @@ class Client {
 
     async getCandlestickData(sym, interval, startTime = new Date().getFullYear()) {
         try {
-            const query = this.queryString({ symbol: sym, interval: interval, startTime: startTime, limit: 1000 });
+            const query = this.queryString({ symbol: sym, interval: interval, startTime: startTime });
 
             const response = await this.getRequest(
                 `${this.base}api/v3/klines?${query}`,
@@ -478,17 +478,18 @@ class Client {
         let sticks = await this.getCandlestickData(sym, interval, twoYearsBefore);
         let lastDateIteration = new Date(sticks[sticks.length - 1][6]);
 
+        // 500 data is queried by default, 1 year is 365 days, so I need more iterations
         let data = [];
-        data.push(sticks)
-        // console.log(today);
-        console.log(lastDateIteration);
+        do {
+            if (sticks.length >= 365) {
+                data.push(sticks);
+            }
 
-        while (lastDateIteration != today) {
-            // console.log(`today = ${today}`)
-            // console.log(`lastDateIteration = ${lastDateIteration}`)
-            // console.log(`lastDateIteration != today ==>> ${lastDateIteration != today}`)
             try {
-                sticks = await this.getCandlestickData(sym, interval, Date.parse(lastDateIteration));
+                // Date.parse(x) deletes the last 3 zeros, '000'
+                sticks = await this.getCandlestickData(sym, interval, (Date.parse(lastDateIteration) + 999));
+                console.log(typeof sticks)
+                console.log(Date.parse(lastDateIteration) + 999);
                 await this.sleep(1000);
                 data.push(sticks);
                 lastDateIteration = new Date(data[0][data.length - 1][6]);
@@ -501,7 +502,7 @@ class Client {
                 console.error('Error: ' + error);
                 break;
             }
-        }
+        } while (lastDateIteration.toString() != today.toString())
         // console.log(data);
         // console.log(data[0][data.length - 1]);
         return data;
@@ -513,9 +514,11 @@ module.exports = Client;
 const client = new Client(config.apiKey, config.apiSecret);
 
 // ##################### TESTING CLASS METHODS #####################
+client.arrayToKlineObj(Promise.resolve(client.getCandlestickData('ETHBTC', '1d', 1)));
+// writeData(client.downloadCandelSticks('ETHBTC', '1d', 1), 'ETHBTC', '1d');
+// client.downloadCandelSticks('ETHBTC', '1d', 2).then((mp) => console.log(mp));
 
 // client.getCandlestickData('ETHBTC', '1d').then((mp) => console.log(mp));
-client.downloadCandelSticks('ETHBTC', '1d', 1).then((mp) => console.log(mp));
 // client.getAccountInfo().then((mp) => console.log(mp));
 // client.exchangeInfo().then((mp) => console.log(mp));
 // client.getBalances().then((mp) => console.log(mp));

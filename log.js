@@ -1,39 +1,16 @@
 const fs = require('fs');
 const process = require('process');
-const config = require('./config.json');
 
+const writeData = async (data, symbol = 'ETHBTC', interval) => {
+    const jsonString = JSON.stringify(await data);
 
-const arrayToKlineObj = (arr) => {
-    let dataHolder = [];
-    for (let i = 0; i < arr.length; i++) {
-        let data = {
-            openTime: arr[i][0],
-            open: arr[i][1],
-            high: arr[i][2],
-            low: arr[i][3],
-            close: arr[i][4],
-            volume: arr[i][5],
-            closeTime: arr[i][6],
-            quoteAVol: arr[i][7],
-            numOfTrades: arr[i][8],
-            tbbav: arr[i][9],
-            tbqav: arr[i][10],
-            ignore: arr[i][11]
-        };
-        dataHolder.push(data);
-    }
-    return dataHolder;
-}
+    console.log(jsonString)
 
-const writeData = async (data, symbol = 'ETHBTC') => {
-    const klineObj = arrayToKlineObj(await data);
-    const jsonString = JSON.stringify(klineObj);
-
-    fs.writeFile(`./backtest/${symbol}.json`, jsonString, (err) => {
+    fs.writeFile(`./backtest/${symbol}_${interval}.json`, jsonString, {flag: 'w'}, (err) => {
         if (err) {
             console.log('Error creating file.', err);
         } else {
-            console.log(`Successfully created ${symbol}.json.`)
+            console.log(`Successfully created ${symbol}_${interval}.json.`)
         }
     })
 };
