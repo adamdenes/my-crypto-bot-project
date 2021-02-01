@@ -485,13 +485,14 @@ class Client {
             try {
                 data.push(await this.getCandlestickData(sym, interval, Date.parse(lastDateIteration)));
 
-                if(typeof lastDateIteration === undefined) {
+                if(typeof lastDateIteration === 'undefined') {
                     return data;
                 }
                 lastDateIteration = new Date(data[0][data.length - 1][6]);
                 console.log(lastDateIteration);
             } catch (error) {
                 console.error('Error: ' + error);
+                break;
             }
         }
         
