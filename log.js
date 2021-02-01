@@ -1,8 +1,16 @@
 const fs = require('fs');
 const process = require('process');
 
+/**
+ * Gets the candles information for a given symbol
+ * intervals: 1m,3m,5m,15m,30m,1h,2h,4h,6h,8h,12h,1d,3d,1w,1M
+ * @param {object} data 
+ * @param {string} symbol 
+ * @param {string} interval 
+ * @param {string} flag 
+ */
 const writeData = async (data, symbol = 'ETHBTC', interval, flag) => {
-    const jsonString = JSON.stringify(await data);
+    const jsonString = JSON.stringify(await data[0]);
 
     fs.writeFile(`./backtest/${symbol}_${interval}.json`, jsonString, {flag: flag}, (err) => {
         if (err) {

@@ -500,7 +500,7 @@ class Client {
         }
 
         writeData(data, sym, interval, 'w');
-        // return data;
+        return data;
     }
 }
 
@@ -510,7 +510,7 @@ module.exports = Client;
 
 // ##################### TESTING CLASS METHODS #####################
 // writeData(client.getCandlestickData('ETHBTC', '1d', new Date().setFullYear(new Date().getFullYear() - 2), Date.now()), 'ETHBTC', '1d', 'w');
-// client.downloadCandelSticks('ETHBTC', '1w', 3).then((mp) => console.log(mp));
+// client.downloadCandelSticks('ETHBTC', '1h', 1).then((mp) => console.log(mp));
 
 // client.getCandlestickData('ETHBTC', '1d', new Date().setFullYear(new Date().getFullYear() - 2), Date.now()).then((mp) => console.log(mp));
 // client.getAccountInfo().then((mp) => console.log(mp));
