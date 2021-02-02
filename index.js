@@ -3,7 +3,6 @@ const crypto = require('crypto');
 const { logger, writeData } = require('./log');
 const config = require('./config.json');
 
-
 class Client {
     constructor(apiKey, apiSecret) {
         this.apiKey = apiKey;
@@ -473,34 +472,28 @@ class Client {
     async downloadCandelSticks(sym, interval, startTime) {
         // get the current time 2 years back from now
         const date = new Date();
-        const end = Date.parse(new Date(date.getFullYear(), date.getMonth(), date.getDate() -1, 24, 59, 59, 999)) + 999;
+        const end = Date.parse(new Date(date.getFullYear(), date.getMonth(), date.getDate() - 1, 24, 59, 59, 999)) + 999;
         let start = new Date().setFullYear(new Date().getFullYear() - startTime);
         let sticks = await this.getCandlestickData(sym, interval, start, end);
-
-        let lastDateIteration = sticks[sticks.length - 1][6];
-        let data = [];
-
-        if (sticks.length <= 366) {
-            console.log('LAST: ' + lastDateIteration);
-            console.log('START: ' + start);
+        let data = sticks.filter(e => e[6] < end).map(e => e);
+        let lastDateIteration = data[data.length-1][6];;
+        
+        while (lastDateIteration < end) {
+            start = lastDateIteration + 1;
+            console.log('STARTTIME: ' + start);
             console.log('END: ' + end);
-            data.push(sticks)
-        }
-
-        while (end !== lastDateIteration) {
-            start = lastDateIteration;
-            console.log('LAST: ' + lastDateIteration);
-            console.log('START: ' + start);
-            console.log('END: ' + end);
+            
             sticks = await this.getCandlestickData(sym, interval, start, end);
-            data.push(sticks)
-
-            lastDateIteration = sticks[sticks.length - 1][6];
             await this.sleep(1000);
+            
+            sticks.forEach(e => {
+                data.push(e);
+            });
+            console.log('DATA-LENGTH: ' + data.length)
+            lastDateIteration = data[data.length - 1][6];
+            console.log('LASTITERATION: ' + lastDateIteration);
         }
-
-        writeData(data, sym, interval, 'w');
-        return data;
+        writeData(data, sym, interval, 'w')
     }
 }
 
@@ -509,10 +502,10 @@ module.exports = Client;
 // const client = new Client(config.apiKey, config.apiSecret);
 
 // ##################### TESTING CLASS METHODS #####################
-// writeData(client.getCandlestickData('ETHBTC', '1d', new Date().setFullYear(new Date().getFullYear() - 2), Date.now()), 'ETHBTC', '1d', 'w');
-// client.downloadCandelSticks('ETHBTC', '1h', 1).then((mp) => console.log(mp));
+// writeData(client.getCandlestickData('ETHBTC', '1d', 2), 'ETHBTC', '1d', 'w');
+// client.downloadCandelSticks('ETHBTC', '1w', 1).then((mp) => console.log(mp));
 
-// client.getCandlestickData('ETHBTC', '1d', new Date().setFullYear(new Date().getFullYear() - 2), Date.now()).then((mp) => console.log(mp));
+// client.getCandlestickData('ETHBTC', '1d', 1612209599999, 1612223999999).then((mp) => console.log(mp));
 // client.getAccountInfo().then((mp) => console.log(mp));
 // client.exchangeInfo().then((mp) => console.log(mp));
 // client.getBalances().then((mp) => console.log(mp));

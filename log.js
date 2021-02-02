@@ -1,6 +1,34 @@
 const fs = require('fs');
 const process = require('process');
 
+
+/**
+ * Converts the array to an object
+ * @param {object} arr 
+ */
+const convertArrToJson = (arr) => {
+    let dataHolder = [];
+
+    for (let i = 0; i < arr.length; i++) {
+        let kline = {
+            openTime: arr[i][0],
+            open: arr[i][1],
+            close: arr[i][2],
+            high: arr[i][3],
+            low: arr[i][4],
+            volume: arr[i][5],
+            closeTime: arr[i][6],
+            quoteAssetValue: arr[i][7],
+            numOfTrades: arr[i][8],
+            takerBuyBaseAssetVol: arr[i][9],
+            takerBuyQuoteAssetVol: arr[i][10],
+            ignore: arr[i][11]
+        }
+        dataHolder.push(kline);
+    }
+    return dataHolder;
+}; 
+
 /**
  * Gets the candles information for a given symbol
  * intervals: 1m,3m,5m,15m,30m,1h,2h,4h,6h,8h,12h,1d,3d,1w,1M
@@ -9,8 +37,8 @@ const process = require('process');
  * @param {string} interval 
  * @param {string} flag 
  */
-const writeData = async (data, symbol = 'ETHBTC', interval, flag) => {
-    const jsonString = JSON.stringify(await data[0]);
+const writeData = async (data, symbol, interval, flag) => {
+    const jsonString = JSON.stringify(convertArrToJson(await data));
 
     fs.writeFile(`./backtest/${symbol}_${interval}.json`, jsonString, {flag: flag}, (err) => {
         if (err) {
