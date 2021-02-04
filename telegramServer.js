@@ -22,15 +22,26 @@ app.post('/hook', (req, res) => {
     // console.log(req.body);
     const chatId = req.body.message.chat.id;
     // console.log(chatId)
-    const msg = req.body.message.text;
+    const msg = req.body.message.text || req.body.message.sticker.emoji;
     console.log(msg);
 
+    if (msg === undefined) {
+        testBot.sendMessage(chatId, 'This type of message is not supported!', {})
+            .then((r) => res.end());
+    } 
+
     if (msg.match(/\/hello/gi)) {
-        testBot.sendMessage(chatId, 'Hi! 👋”', {})
+        testBot.sendMessage(chatId, 'Hi! 👋', {})
             .then((r) => res.status(200).send(r))
             .catch((error) => res.send(error));
     } else if (!msg.includes('/')) {
         res.status(200).send({});
+    } else if (msg.match('/cmd')) {
+        testBot.replyKeyboard.keyboard = [ ['/hello'], ['/start'], ['/stop'], ['/status'] ];
+
+        testBot.sendMessage(chatId, 'Chat commands', testBot.replyKeyboard)
+            .then((r) => res.status(200).send(r))
+            .catch((error) => res.send(error));
     } else {
         testBot.sendMessage(chatId, 'Unknown command... 😕', {})
             .then((r) => res.status(200).send(r))

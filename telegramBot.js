@@ -5,6 +5,12 @@ class Bot {
     constructor(token, url) {
         this.token = token;
         this.url = url;
+        this.replyKeyboard = {
+            keyboard: [],
+            resize_keyboard: true,
+            one_time_keyboard: true,
+            force_reply: true
+        };
     }
 
     get token() {
@@ -25,6 +31,14 @@ class Bot {
 
     set url(newUrl) {
         this._url = newUrl;
+    }
+
+    set replyKeyboardCommands(cmd) {
+        if (isArray(cmd)){
+            this._replyKeyboard.keyboard = [...cmd];
+        } else {
+            this._replyKeyboard.keyboard.push = cmd;
+        }
     }
 
     async getMe() {
@@ -54,9 +68,9 @@ class Bot {
             const response = await fetch(`${this.url + this.token}/sendMessage`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ chat_id: chatId, text: text, reply_markup: reply_markup})
+                body: JSON.stringify({ chat_id: chatId, text: text, reply_markup: reply_markup })
             });
-            
+
             if (response.ok) {
                 const jsonString = response.json();
                 return jsonString;
