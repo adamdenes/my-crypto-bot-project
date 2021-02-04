@@ -4,27 +4,29 @@ const fetch = require('node-fetch');
 
 // Express initialization
 const express = require('express');
+
 const app = express();
 const bodyParser = require('body-parser');
+
 const port = 80;
-const url = `https://api.telegram.org/bot${config.telegramToken}/`
+const url = `https://api.telegram.org/bot${config.telegramToken}/`;
 
 // Functions to test telegram API
 const getMe = async () => {
-    const response = await getData(url + 'getMe');
+    const response = await getData(`${url}getMe`);
     return response;
 };
 
 const getUpdates = async () => {
-    const response = await getData(url + 'getUpdates');
-    return response.result.map(e => e);
+    const response = await getData(`${url}getUpdates`);
+    return response.result.map((e) => e);
 };
 
 const setWebhook = async () => {
     const query = queryString({ url: config.webhook });
-    const response = await postData(url + 'setWebhook?' + query);
+    const response = await postData(`${url}setWebhook?${query}`);
     return response;
-}
+};
 
 // getMe().then(r => console.log(r));
 // getUpdates().then(r => console.log(r));
@@ -41,18 +43,20 @@ app.post('/', (req, res) => {
     const msg = req.body.message.text;
     console.log(msg);
     if (msg.match(/\/hello/gi)) {
-        const response = fetch(url + 'sendMessage', {
+        const response = fetch(`${url}sendMessage`, {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ chat_id: chatId, text: 'Hi! 👋”' })
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ chat_id: chatId, text: 'Hi! 👋”' }),
         });
 
         res.status(200).send(response);
+    } else if (!msg.includes('/')) {
+        res.status(200).send({});
     } else {
-        const response = fetch(url + 'sendMessage', {
+        const response = fetch(`${url}sendMessage`, {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ chat_id: chatId, text: 'Unknown command... 😕' })
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ chat_id: chatId, text: 'Unknown command... 😕' }),
         });
 
         res.status(200).send(response);

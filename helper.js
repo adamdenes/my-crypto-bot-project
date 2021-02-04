@@ -8,7 +8,7 @@ const getData = async (url, data = {}) => {
             const jsonResponse = await response.json();
             return jsonResponse;
         }
-        throw new Error("Request failed!");
+        throw new Error('Request failed!');
     } catch (error) {
         console.log(error);
     }
@@ -18,7 +18,7 @@ const getData = async (url, data = {}) => {
 const postData = async (url, data) => {
     try {
         const response = await fetch(url, {
-            method: "POST",
+            method: 'POST',
             body: JSON.stringify(data),
         });
 
@@ -26,20 +26,21 @@ const postData = async (url, data) => {
             const jsonResponse = await response.json();
             return jsonResponse;
         }
-        throw new Error("Request failed!");
+        throw new Error('Request failed!');
     } catch (error) {
         console.log(error);
     }
 };
 
 // make query string
-const queryString = (obj) => {
-    return Object.keys(obj).reduce((a, k) => { 
-        if (obj[k] !== undefined) {
-            a.push(k + '=' + encodeURIComponent(obj[k]))
-        } 
-        return a 
-    }, []).join( '&' );
-}
+const queryString = (obj) =>
+    Object.keys(obj)
+        .reduce((a, k) => {
+            if (obj[k] !== undefined) {
+                a.push(`${k}=${encodeURIComponent(obj[k])}`);
+            }
+            return a;
+        }, [])
+        .join('&');
 
 module.exports = { getData, postData, queryString };

@@ -2,3 +2,4 @@ node_modules
 package*
 bot2*
 config.json
+.eslintrc

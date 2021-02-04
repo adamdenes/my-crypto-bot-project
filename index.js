@@ -57,10 +57,7 @@ class Client {
     }
 
     signature(query) {
-        return crypto
-            .createHmac('sha256', this.apiSecret)
-            .update(query)
-            .digest('hex');
+        return crypto.createHmac('sha256', this.apiSecret).update(query).digest('hex');
     }
 
     offset(server, date) {
@@ -71,7 +68,7 @@ class Client {
         return Object.keys(obj)
             .reduce((a, k) => {
                 if (obj[k] !== undefined) {
-                    a.push(k + '=' + encodeURIComponent(obj[k]));
+                    a.push(`${k}=${encodeURIComponent(obj[k])}`);
                 }
                 return a;
             }, [])
@@ -82,26 +79,21 @@ class Client {
         if (cryptoPriceInQuote.includes('USDT')) {
             const currentPrice = await this.getMarketPrice(cryptoPriceInQuote);
             return +currentPrice.price;
-        } else {
-            const currentPrices = await Promise.all([
-                this.getMarketPrice(cryptoPriceInQuote),
-                this.getMarketPrice(cryptoPriceInQuote.slice(3) + 'USDT'),
-            ]);
-
-            return currentPrices.reduce((acc, cp) => acc.price * cp.price);
         }
+        const currentPrices = await Promise.all([
+            this.getMarketPrice(cryptoPriceInQuote),
+            this.getMarketPrice(`${cryptoPriceInQuote.slice(3)}USDT`),
+        ]);
+
+        return currentPrices.reduce((acc, cp) => acc.price * cp.price);
     }
 
     async usdTotal() {
-        const info = await Promise.all([
-            this.priceInUSD('BTCUSDT'),
-            this.priceInUSD('ETHBTC'),
-            this.getBalances()
-        ]);
+        const info = await Promise.all([this.priceInUSD('BTCUSDT'), this.priceInUSD('ETHBTC'), this.getBalances()]);
 
         let balanceInUSD = 0;
 
-        info[2].forEach(element => {
+        info[2].forEach((element) => {
             if (element.asset === 'BTC') {
                 balanceInUSD += element.free * info[0];
             }
@@ -182,8 +174,7 @@ class Client {
         const serverTime = await server;
         const currentTime = new Date().getTime();
         const offset = this.offset(serverTime, currentTime);
-        const useServerTime =
-            offset < 0 ? serverTime - offset : serverTime + offset;
+        const useServerTime = offset < 0 ? serverTime - offset : serverTime + offset;
         // logger('TIMESTAMP', `GET adjustTimestamp() success, => '${useServerTime}'`, 'info');
 
         return useServerTime;
@@ -195,16 +186,13 @@ class Client {
             const query = this.queryString({ timestamp: serverTime });
             const signature = this.signature(query);
 
-            const response = await this.getRequest(
-                `${this.base}api/v3/account?${query}&signature=${signature}`,
-                {
-                    method: 'GET',
-                    headers: {
-                        'X-MBX-APIKEY': this.apiKey,
-                        'Content-type': 'x-www-form-urlencoded',
-                    },
-                }
-            );
+            const response = await this.getRequest(`${this.base}api/v3/account?${query}&signature=${signature}`, {
+                method: 'GET',
+                headers: {
+                    'X-MBX-APIKEY': this.apiKey,
+                    'Content-type': 'x-www-form-urlencoded',
+                },
+            });
             // logger('ACCOUNT', `GET getAccountInfo() success => '${response.permissions}'`, 'info');
             return response;
         } catch (error) {
@@ -226,25 +214,20 @@ class Client {
         });
         const sig = this.signature(query);
 
-        const response = await this.postRequest(
-            `${this.base}api/v3/order/test?${query}&signature=${sig}`,
-            {
-                method: 'POST',
-                headers: {
-                    'X-MBX-APIKEY': this.apiKey,
-                    'Content-type': 'x-www-form-urlencoded',
-                },
-            }
-        );
+        const response = await this.postRequest(`${this.base}api/v3/order/test?${query}&signature=${sig}`, {
+            method: 'POST',
+            headers: {
+                'X-MBX-APIKEY': this.apiKey,
+                'Content-type': 'x-www-form-urlencoded',
+            },
+        });
         return response;
     }
 
     async getBalances() {
         try {
             const data = await this.getAccountInfo();
-            const balances = data.balances
-                .map((asset) => asset)
-                .filter((value) => +value.free > 0);
+            const balances = data.balances.map((asset) => asset).filter((value) => +value.free > 0);
             // logger('BALANCES', `GET getBalances() success`, 'info');
 
             return balances;
@@ -254,10 +237,8 @@ class Client {
     }
 
     async getMarketPrice(symbol = 'ETHBTC') {
-        const param = typeof symbol === 'string' ? '?symbol=' + symbol : '';
-        const marketPrice = await this.getRequest(
-            `${this.base}api/v3/ticker/price${param}`
-        );
+        const param = typeof symbol === 'string' ? `?symbol=${symbol}` : '';
+        const marketPrice = await this.getRequest(`${this.base}api/v3/ticker/price${param}`);
         // logger('PRICE', `GET getMarketPrice() success, asset => ${marketPrice.symbol}, price => ${marketPrice.price}`, 'info');
 
         return marketPrice;
@@ -272,17 +253,17 @@ class Client {
                 this.getBalances(),
                 this.getMarketPrice(sym),
                 this.adjustTimestamp(this.getServerTime()),
-                this.minQuantity(this.exchangeInfo(), sym)
+                this.minQuantity(this.exchangeInfo(), sym),
             ]);
 
             const quote = priceInfo[1][0].free;
             const freeCrypto = priceInfo[1][1].free;
             const marketPrice = priceInfo[2].price;
             const serverTime = priceInfo[3];
-            let pt = +marketPrice + marketPrice * this.operation.SELL_PROFIT_THRESHOLD;
-            let sl = +marketPrice - (marketPrice * this.operation.SELL_STOP_LOSS_THRESHOLD);
-            let minQuantity = priceInfo[4];
-            let priceQuantity = +(freeCrypto * 0.02).toFixed(3) * marketPrice;
+            const pt = +marketPrice + marketPrice * this.operation.SELL_PROFIT_THRESHOLD;
+            const sl = +marketPrice - marketPrice * this.operation.SELL_STOP_LOSS_THRESHOLD;
+            const minQuantity = priceInfo[4];
+            const priceQuantity = +(freeCrypto * 0.02).toFixed(3) * marketPrice;
 
             logger('SELL-ORDER', `Quote: ${priceInfo[1][0].asset} - Free: ${quote}`, 'debug');
             logger('SELL-ORDER', `Available: ${freeCrypto}`, 'debug');
@@ -293,9 +274,13 @@ class Client {
             logger('SELL-ORDER', `Profit Target: ${+pt.toFixed(6)} = $${priceInfo[0] * +pt.toFixed(6)}`, 'debug');
             logger('SELL-ORDER', `Stop Loss: ${+sl.toFixed(6)} = $${priceInfo[0] * +sl.toFixed(6)}`, 'debug');
             logger('SELL-ORDER', `Minimum Quantity: ${minQuantity}`, 'debug');
-            logger('SELL-ORDER', `Minimum Quantity < Quantity : ${minQuantity < +(freeCrypto * 0.02).toFixed(3)}`, 'debug');
+            logger(
+                'SELL-ORDER',
+                `Minimum Quantity < Quantity : ${minQuantity < +(freeCrypto * 0.02).toFixed(3)}`,
+                'debug'
+            );
 
-            // if price * quantity > available balance 
+            // if price * quantity > available balance
             if (priceQuantity > freeCrypto) {
                 logger('SELL-ORDER', `Insufficient balance : ${freeCrypto}`, 'CRITICAL');
             }
@@ -313,17 +298,20 @@ class Client {
             const query = this.queryString(this.order);
             const sig = this.signature(query);
 
-            const response = await this.postRequest(
-                `${this.base}api/v3/order?${query}&signature=${sig}`,
-                {
-                    method: 'POST',
-                    headers: {
-                        'X-MBX-APIKEY': this.apiKey,
-                        'Content-type': 'x-www-form-urlencoded',
-                    },
-                }
+            const response = await this.postRequest(`${this.base}api/v3/order?${query}&signature=${sig}`, {
+                method: 'POST',
+                headers: {
+                    'X-MBX-APIKEY': this.apiKey,
+                    'Content-type': 'x-www-form-urlencoded',
+                },
+            });
+            logger(
+                'SELL-ORDER',
+                `GET placeSellOrder() success, SELL price => '${response.price} = $${(
+                    response.price * priceInfo[0]
+                ).toFixed(2)}'`,
+                'warning'
             );
-            logger('SELL-ORDER', `GET placeSellOrder() success, SELL price => '${response.price} = $${(response.price * priceInfo[0]).toFixed(2)}'`, 'warning');
             return response.price;
         } catch (error) {
             logger('SELL-ORDER', `GET placeSellOrder() failed => '${error}'`, 'error');
@@ -339,18 +327,17 @@ class Client {
                 this.getBalances(),
                 this.getMarketPrice(sym),
                 this.adjustTimestamp(this.getServerTime()),
-                this.minQuantity(this.exchangeInfo(), sym)
+                this.minQuantity(this.exchangeInfo(), sym),
             ]);
 
             const quote = priceInfo[1][0].free;
             const freeCrypto = priceInfo[1][1].free;
             const marketPrice = priceInfo[2].price;
             const serverTime = priceInfo[3];
-            let pt = +marketPrice - marketPrice * this.operation.BUY_DIP_THRESHOLD;
-            let sl = +marketPrice + (marketPrice * this.operation.BUY_UPWARD_TREND_THRESHOLD);
-            let minQuantity = priceInfo[4];
-            let priceQuantity = +(freeCrypto * 0.02).toFixed(3) * marketPrice;
-
+            const pt = +marketPrice - marketPrice * this.operation.BUY_DIP_THRESHOLD;
+            const sl = +marketPrice + marketPrice * this.operation.BUY_UPWARD_TREND_THRESHOLD;
+            const minQuantity = priceInfo[4];
+            const priceQuantity = +(freeCrypto * 0.02).toFixed(3) * marketPrice;
 
             logger('BUY-ORDER', `Quote: ${priceInfo[1][0].asset} - Free: ${quote}`, 'debug');
             logger('BUY-ORDER', `Available: ${freeCrypto}`, 'debug');
@@ -361,9 +348,13 @@ class Client {
             logger('BUY-ORDER', `Profit Target: ${+pt.toFixed(6)} = $${priceInfo[0] * +pt.toFixed(6)}`, 'debug');
             logger('BUY-ORDER', `Stop Loss: ${+sl.toFixed(6)} = $${priceInfo[0] * +sl.toFixed(6)}`, 'debug');
             logger('BUY-ORDER', `Minimum Quantity: ${minQuantity}`, 'debug');
-            logger('BUY-ORDER', `Minimum Quantity < Quantity : ${minQuantity < +(freeCrypto * 0.02).toFixed(3)}`, 'debug');
+            logger(
+                'BUY-ORDER',
+                `Minimum Quantity < Quantity : ${minQuantity < +(freeCrypto * 0.02).toFixed(3)}`,
+                'debug'
+            );
 
-            // if price * quantity > available balance 
+            // if price * quantity > available balance
             if (priceQuantity > quote) {
                 logger('BUY-ORDER', `Insufficient balance : ${quote}`, 'CRITICAL');
             }
@@ -381,17 +372,20 @@ class Client {
             const query = this.queryString(this.order);
             const sig = this.signature(query);
 
-            const response = await this.postRequest(
-                `${this.base}api/v3/order?${query}&signature=${sig}`,
-                {
-                    method: 'POST',
-                    headers: {
-                        'X-MBX-APIKEY': this.apiKey,
-                        'Content-type': 'x-www-form-urlencoded',
-                    },
-                }
+            const response = await this.postRequest(`${this.base}api/v3/order?${query}&signature=${sig}`, {
+                method: 'POST',
+                headers: {
+                    'X-MBX-APIKEY': this.apiKey,
+                    'Content-type': 'x-www-form-urlencoded',
+                },
+            });
+            logger(
+                'BUY-ORDER',
+                `GET placeBuyOrder() success, BUY price => '${response.price} = $${(
+                    response.price * priceInfo[0]
+                ).toFixed(2)}'`,
+                'warning'
             );
-            logger('BUY-ORDER', `GET placeBuyOrder() success, BUY price => '${response.price} = $${(response.price * priceInfo[0]).toFixed(2)}'`, 'warning');
             return response.price;
         } catch (error) {
             logger('BUY-ORDER', `GET placeBuyOrder() failed => '${error}'`, 'error');
@@ -409,16 +403,13 @@ class Client {
                 timestamp: serverTime,
             });
             const sig = this.signature(query);
-            const response = await this.postRequest(
-                `${this.base}api/v3/order?${query}&signature=${sig}`,
-                {
-                    method: 'DELETE',
-                    headers: {
-                        'X-MBX-APIKEY': this.apiKey,
-                        'Content-type': 'x-www-form-urlencoded',
-                    },
-                }
-            );
+            const response = await this.postRequest(`${this.base}api/v3/order?${query}&signature=${sig}`, {
+                method: 'DELETE',
+                headers: {
+                    'X-MBX-APIKEY': this.apiKey,
+                    'Content-type': 'x-www-form-urlencoded',
+                },
+            });
             // logger('CANCEL-ORDER', `GET cancelOrder() success, orderId => '${query.orderId}'`, 'error');
             return response;
         } catch (error) {
@@ -432,16 +423,13 @@ class Client {
             const query = this.queryString({ recvWindow: 5000, timestamp: serverTime });
             const sig = this.signature(query);
 
-            const response = await this.getRequest(
-                `${this.base}api/v3/openOrders?${query}&signature=${sig}`,
-                {
-                    method: 'GET',
-                    headers: {
-                        'X-MBX-APIKEY': this.apiKey,
-                        'Content-type': 'x-www-form-urlencoded',
-                    },
-                }
-            );
+            const response = await this.getRequest(`${this.base}api/v3/openOrders?${query}&signature=${sig}`, {
+                method: 'GET',
+                headers: {
+                    'X-MBX-APIKEY': this.apiKey,
+                    'Content-type': 'x-www-form-urlencoded',
+                },
+            });
             // logger('OPERATION', `GET getOperationDetails() success => '${response}'`, 'info');
             return response;
         } catch (error) {
@@ -451,18 +439,20 @@ class Client {
 
     async getCandlestickData(sym, interval, startTime, endTime) {
         try {
-            const query = this.queryString({ symbol: sym, interval: interval, startTime: startTime, endTime: endTime});
+            const query = this.queryString({
+                symbol: sym,
+                interval,
+                startTime,
+                endTime,
+            });
 
-            const response = await this.getRequest(
-                `${this.base}api/v3/klines?${query}`,
-                {
-                    method: 'GET',
-                    headers: {
-                        'X-MBX-APIKEY': this.apiKey,
-                        'Content-type': 'x-www-form-urlencoded',
-                    },
-                }
-            );
+            const response = await this.getRequest(`${this.base}api/v3/klines?${query}`, {
+                method: 'GET',
+                headers: {
+                    'X-MBX-APIKEY': this.apiKey,
+                    'Content-type': 'x-www-form-urlencoded',
+                },
+            });
             return response;
         } catch (error) {
             logger('KLINE', `GET getCandelsticData() failed => '${error}'`, 'error');
@@ -472,26 +462,27 @@ class Client {
     async downloadCandelSticks(sym, interval, startTime) {
         // get the current time 2 years back from now
         const date = new Date();
-        const end = Date.parse(new Date(date.getFullYear(), date.getMonth(), date.getDate() - 1, 24, 59, 59, 999)) + 999;
+        const end =
+            Date.parse(new Date(date.getFullYear(), date.getMonth(), date.getDate() - 1, 24, 59, 59, 999)) + 999;
         let start = new Date().setFullYear(new Date().getFullYear() - startTime);
         let sticks = await this.getCandlestickData(sym, interval, start, end);
-        let data = sticks.filter(e => e[6] < end).map(e => e);
-        let lastDateIteration = data[data.length-1][6];;
-        
+        const data = sticks.filter((e) => e[6] < end).map((e) => e);
+        let lastDateIteration = data[data.length - 1][6];
+
         while (lastDateIteration < end) {
             start = lastDateIteration + 1;
-            console.log('STARTTIME: ' + start);
-            console.log('END: ' + end);
-            
+            console.log(`STARTTIME: ${start}`);
+            console.log(`END: ${end}`);
+
             sticks = await this.getCandlestickData(sym, interval, start, end);
             await this.sleep(1000);
-            
-            sticks.forEach(e => {
+
+            sticks.forEach((e) => {
                 data.push(e);
             });
-            console.log('DATA-LENGTH: ' + data.length)
+            console.log(`DATA-LENGTH: ${data.length}`);
             lastDateIteration = data[data.length - 1][6];
-            console.log('LASTITERATION: ' + lastDateIteration);
+            console.log(`LASTITERATION: ${lastDateIteration}`);
         }
         writeData(data, sym, interval, 'w');
         return JSON.stringify(convertArrToJson(data));
