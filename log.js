@@ -131,4 +131,4 @@ const logger = (operation, msg, severity) => {
     logToFile(data);
 };
 
-module.exports = { logger, updateConfig, writeData };
+module.exports = { logger, updateConfig, writeData, convertArrToJson };
