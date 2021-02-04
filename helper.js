@@ -15,7 +15,7 @@ const getData = async (url, data = {}) => {
 };
 
 // async ... await POST
-const postData = async (url, data = {}) => {
+const postData = async (url, data) => {
     try {
         const response = await fetch(url, {
             method: "POST",

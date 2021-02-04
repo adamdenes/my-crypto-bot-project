@@ -1,12 +1,15 @@
 const { getData, postData, queryString } = require('./helper.js');
 const config = require('./config.json');
+const fetch = require('node-fetch');
 
+// Express initialization
 const express = require('express');
 const app = express();
 const bodyParser = require('body-parser');
 const port = 80;
 const url = `https://api.telegram.org/bot${config.telegramToken}/`
 
+// Functions to test telegram API
 const getMe = async () => {
     const response = await getData(url + 'getMe');
     return response;
@@ -25,17 +28,37 @@ const setWebhook = async () => {
 
 // getMe().then(r => console.log(r));
 // getUpdates().then(r => console.log(r));
-// setWebhook().then(r => console.log(r));
 
-// app.use(bodyParser.json());
+// Set the webhook
+setWebhook();
 
-// app.post('/', (req, res) => {
-//     console.log(req.body);
-//     const chatId = req.body.message.chat.id;
-//     console.log(chatId)
-//     res.send(req.body);
-// });
+app.use(bodyParser.json());
 
-// app.listen(port, () => {
-//     console.log(`Listening on port ${port}`);
-// });
+app.post('/', (req, res) => {
+    // console.log(req.body);
+    const chatId = req.body.message.chat.id;
+    // console.log(chatId)
+    const msg = req.body.message.text;
+    console.log(msg);
+    if (msg.match(/\/hello/gi)) {
+        const response = fetch(url + 'sendMessage', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ chat_id: chatId, text: 'Hi! 👋”' })
+        });
+
+        res.status(200).send(response);
+    } else {
+        const response = fetch(url + 'sendMessage', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ chat_id: chatId, text: 'Unknown command... 😕' })
+        });
+
+        res.status(200).send(response);
+    }
+});
+
+app.listen(port, () => {
+    console.log(`Listening on port ${port}`);
+});
