@@ -4,7 +4,6 @@ const fetch = require('node-fetch');
 const getData = async (url, data = {}) => {
     try {
         const response = await fetch(url, data);
-        console.log(response)
         if (response.ok) {
             const jsonResponse = await response.json();
             return jsonResponse;
