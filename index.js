@@ -500,11 +500,11 @@ class Client {
 
 module.exports = Client;
 
-const client = new Client(config.apiKey, config.apiSecret);
+// const client = new Client(config.apiKey, config.apiSecret);
 
 // ##################### TESTING CLASS METHODS #####################
 // writeData(client.getCandlestickData('ETHBTC', '1d', 2), 'ETHBTC', '1d', 'w');
-client.downloadCandelSticks('ETHBTC', '1d', 2).then((mp) => console.log(mp));
+// client.downloadCandelSticks('ETHBTC', '1d', 2).then((mp) => console.log(mp));
 
 // client.getCandlestickData('ETHBTC', '1d', 1612209599999, 1612223999999).then((mp) => console.log(mp));
 // client.getAccountInfo().then((mp) => console.log(mp));
