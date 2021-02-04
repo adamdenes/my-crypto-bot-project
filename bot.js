@@ -23,10 +23,10 @@ const getUpdates = async () => {
 app.use(bodyParser.json());
 
 app.post('/', (req, res) => {
-    // console.log(req.body);
+    console.log(req.body);
     const chatId = req.body.message.chat.id;
     console.log(chatId)
-    // res.send(req.body);
+    res.send(req.body);
 });
 
 app.listen(port, () => {
