@@ -1,5 +1,6 @@
 const config = require('./config.json');
 const Client = require('./index');
+const { sleep } = require('./helper')
 const { logger, updateConfig } = require('./log');
 
 const binance = new Client(config.apiKey, config.apiSecret);
@@ -101,7 +102,7 @@ const startBot = async () => {
             // logger('SYSTEM', `Looking for trade...`, 'info');
             await attemptToMakeTrade();
             // logger('SYSTEM', `Sleeping for 30 sec...`, 'info');
-            await binance.sleep(30000);
+            await sleep(30000);
         } catch (critical) {
             logger('SYSTEM', `BOT failed, FATAL ERROR => '${critical}'`, 'CRITICAL');
         }

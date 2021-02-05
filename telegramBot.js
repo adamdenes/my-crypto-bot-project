@@ -68,7 +68,7 @@ class Bot {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ chat_id: chatId, text: text, reply_markup: reply_markup }),
             });
-            console.log(JSON.stringify({ chat_id: chatId, text: text, reply_markup: reply_markup }));
+            // console.log(JSON.stringify({ chat_id: chatId, text: text, reply_markup: reply_markup }));
             if (response.ok) {
                 const jsonString = response.json();
                 return jsonString;

@@ -1,7 +1,8 @@
-const fetch = require('node-fetch');
 const crypto = require('crypto');
+const fetch = require('node-fetch');
+const { queryString, sleep, offset } = require('./helper');
 const { logger, writeData, convertArrToJson } = require('./log');
-const config = require('./config.json');
+// const config = require('./config.json');
 
 class Client {
     constructor(apiKey, apiSecret) {
@@ -52,27 +53,8 @@ class Client {
         this._order = newOrderObject;
     }
 
-    sleep(ms) {
-        return new Promise((resolve) => setTimeout(resolve, ms));
-    }
-
     signature(query) {
         return crypto.createHmac('sha256', this.apiSecret).update(query).digest('hex');
-    }
-
-    offset(server, date) {
-        return server - date;
-    }
-
-    queryString(obj) {
-        return Object.keys(obj)
-            .reduce((a, k) => {
-                if (obj[k] !== undefined) {
-                    a.push(`${k}=${encodeURIComponent(obj[k])}`);
-                }
-                return a;
-            }, [])
-            .join('&');
     }
 
     async priceInUSD(cryptoPriceInQuote) {
@@ -173,8 +155,8 @@ class Client {
     async adjustTimestamp(server) {
         const serverTime = await server;
         const currentTime = new Date().getTime();
-        const offset = this.offset(serverTime, currentTime);
-        const useServerTime = offset < 0 ? serverTime - offset : serverTime + offset;
+        const os = offset(serverTime, currentTime);
+        const useServerTime = os < 0 ? serverTime - os : serverTime + os;
         // logger('TIMESTAMP', `GET adjustTimestamp() success, => '${useServerTime}'`, 'info');
 
         return useServerTime;
@@ -183,7 +165,7 @@ class Client {
     async getAccountInfo() {
         try {
             const serverTime = await this.adjustTimestamp(this.getServerTime());
-            const query = this.queryString({ timestamp: serverTime });
+            const query = queryString({ timestamp: serverTime });
             const signature = this.signature(query);
 
             const response = await this.getRequest(`${this.base}api/v3/account?${query}&signature=${signature}`, {
@@ -202,7 +184,7 @@ class Client {
 
     async testNewOrders(symbol, side, type = 'LIMIT', timeInForce = 'GTC') {
         const serverTime = await this.adjustTimestamp(this.getServerTime());
-        const query = this.queryString({
+        const query = queryString({
             symbol: 'ETHBTC',
             side: 'SELL',
             type: 'LIMIT',
@@ -295,7 +277,7 @@ class Client {
                 recvWindow: 5000,
                 timestamp: serverTime,
             };
-            const query = this.queryString(this.order);
+            const query = queryString(this.order);
             const sig = this.signature(query);
 
             const response = await this.postRequest(`${this.base}api/v3/order?${query}&signature=${sig}`, {
@@ -369,7 +351,7 @@ class Client {
                 recvWindow: 5000,
                 timestamp: serverTime,
             };
-            const query = this.queryString(this.order);
+            const query = queryString(this.order);
             const sig = this.signature(query);
 
             const response = await this.postRequest(`${this.base}api/v3/order?${query}&signature=${sig}`, {
@@ -396,7 +378,7 @@ class Client {
         try {
             const openOrders = await operation;
             const serverTime = await this.adjustTimestamp(this.getServerTime());
-            const query = this.queryString({
+            const query = queryString({
                 symbol: openOrders[0].symbol,
                 orderId: openOrders[0].orderId,
                 recvWindow: 5000,
@@ -420,7 +402,7 @@ class Client {
     async getOperationDetails() {
         try {
             const serverTime = await this.adjustTimestamp(this.getServerTime());
-            const query = this.queryString({ recvWindow: 5000, timestamp: serverTime });
+            const query = queryString({ recvWindow: 5000, timestamp: serverTime });
             const sig = this.signature(query);
 
             const response = await this.getRequest(`${this.base}api/v3/openOrders?${query}&signature=${sig}`, {
@@ -439,7 +421,7 @@ class Client {
 
     async getCandlestickData(sym, interval, startTime, endTime) {
         try {
-            const query = this.queryString({
+            const query = queryString({
                 symbol: sym,
                 interval,
                 startTime,
@@ -475,7 +457,7 @@ class Client {
             console.log(`END: ${end}`);
 
             sticks = await this.getCandlestickData(sym, interval, start, end);
-            await this.sleep(1000);
+            await sleep(1000);
 
             sticks.forEach((e) => {
                 data.push(e);

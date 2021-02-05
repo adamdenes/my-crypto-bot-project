@@ -43,4 +43,8 @@ const queryString = (obj) =>
         }, [])
         .join('&');
 
-module.exports = { getData, postData, queryString };
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const offset = (server, date) => server - date;
+
+module.exports = { getData, postData, queryString, sleep, offset };

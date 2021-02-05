@@ -37,7 +37,7 @@ app.post('/hook', (req, res) => {
         res.status(200).send({});
     } else if (msg.match(/\/hello/gi)) {
         testBot
-            .sendMessage(chatId, 'Hi! 👋', {})
+            .sendMessage(chatId, `Hi, @${req.body.message.chat.username} 👋`, {})
             .then((r) => res.status(200).send(r))
             .catch((error) => res.send(error));
     } else if (msg.match(/\/start/gi)) {
