@@ -1,3 +1,6 @@
+/* eslint-disable no-console */
+/* eslint-disable no-unused-vars */
+/* eslint-disable class-methods-use-this */
 const crypto = require('crypto');
 const fetch = require('node-fetch');
 const { queryString, sleep, offset } = require('./helper');

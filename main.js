@@ -1,6 +1,6 @@
 const config = require('./config.json');
 const Client = require('./index');
-const { sleep } = require('./helper')
+const { sleep } = require('./helper');
 const { logger, updateConfig } = require('./log');
 
 const binance = new Client(config.apiKey, config.apiSecret);

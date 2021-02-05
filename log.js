@@ -1,3 +1,5 @@
+/* eslint-disable no-plusplus */
+/* eslint-disable no-console */
 const fs = require('fs');
 const process = require('process');
 

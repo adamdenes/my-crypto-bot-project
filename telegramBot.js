@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 const fetch = require('node-fetch');
 const { getData, postData, queryString } = require('./helper.js');
 
@@ -66,6 +67,7 @@ class Bot {
             const response = await fetch(`${this.url + this.token}/sendMessage`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                // eslint-disable-next-line object-shorthand
                 body: JSON.stringify({ chat_id: chatId, text: text, reply_markup: reply_markup }),
             });
             // console.log(JSON.stringify({ chat_id: chatId, text: text, reply_markup: reply_markup }));
