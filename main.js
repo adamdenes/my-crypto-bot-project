@@ -1,8 +1,12 @@
+/* eslint-disable no-console */
+/* eslint-disable no-irregular-whitespace */
+const process = require('process');
 const config = require('./config.json');
 const Client = require('./index');
-const { sleep } = require('./helper');
+const { sleep, killProc } = require('./helper');
 const { logger, updateConfig } = require('./log');
 
+const { pid } = process;
 const binance = new Client(config.apiKey, config.apiSecret);
 // BUY
 const UPWARD_TREND_THRESHOLD = 1.5;
@@ -13,6 +17,34 @@ const STOP_LOSS_THRESHOLD = -2.0;
 
 let isNextOperationBuy = binance.operation.BUY;
 let lastOpPrice = config.lastPrice;
+
+const tryToBuy = (percentageDiff) => {
+    logger('LOGIC', `UPWARD_TREND_THRESHOLD = ${UPWARD_TREND_THRESHOLD}`, 'debug');
+    logger('LOGIC', `DIP_THRESHOLD = ${DIP_THRESHOLD}`, 'debug');
+    logger('LOGIC', `${percentageDiff >= UPWARD_TREND_THRESHOLD || percentageDiff <= DIP_THRESHOLD}`, 'debug');
+
+    if (percentageDiff >= UPWARD_TREND_THRESHOLD || percentageDiff <= DIP_THRESHOLD) {
+        lastOpPrice = binance.placeBuyOrder('ETHBTC');
+        isNextOperationBuy = binance.operation.SELL;
+        logger('TRY-TO-BUY', `percentageDiff => '${percentageDiff}'`, 'INFO');
+        return lastOpPrice;
+    }
+    logger('LOGIC', "Can't place order...", 'debug');
+};
+
+const tryToSell = (percentageDiff) => {
+    logger('LOGIC', `PROFIT_THRESHOLD = ${PROFIT_THRESHOLD}`, 'debug');
+    logger('LOGIC', `STOP_LOSS_THRESHOLD = ${STOP_LOSS_THRESHOLD}`, 'debug');
+    logger('LOGIC', `${percentageDiff >= PROFIT_THRESHOLD || percentageDiff <= STOP_LOSS_THRESHOLD}`, 'debug');
+
+    if (percentageDiff >= PROFIT_THRESHOLD || percentageDiff <= STOP_LOSS_THRESHOLD) {
+        lastOpPrice = binance.placeSellOrder('ETHBTC');
+        isNextOperationBuy = binance.operation.BUY;
+        logger('TRY-TO-SELL', `percentageDiff => '${percentageDiff}'`, 'INFO');
+        return lastOpPrice;
+    }
+    logger('LOGIC', "Can't place order...", 'debug');
+};
 
 const attemptToMakeTrade = async () => {
     const promises = await Promise.all([
@@ -66,36 +98,8 @@ const attemptToMakeTrade = async () => {
     }
 };
 
-const tryToBuy = (percentageDiff) => {
-    logger('LOGIC', `UPWARD_TREND_THRESHOLD = ${UPWARD_TREND_THRESHOLD}`, 'debug');
-    logger('LOGIC', `DIP_THRESHOLD = ${DIP_THRESHOLD}`, 'debug');
-    logger('LOGIC', `${percentageDiff >= UPWARD_TREND_THRESHOLD || percentageDiff <= DIP_THRESHOLD}`, 'debug');
-
-    if (percentageDiff >= UPWARD_TREND_THRESHOLD || percentageDiff <= DIP_THRESHOLD) {
-        lastOpPrice = binance.placeBuyOrder('ETHBTC');
-        isNextOperationBuy = binance.operation.SELL;
-        logger('TRY-TO-BUY', `percentageDiff => '${percentageDiff}'`, 'INFO');
-        return lastOpPrice;
-    }
-    logger('LOGIC', "Can't place order...", 'debug');
-};
-
-const tryToSell = (percentageDiff) => {
-    logger('LOGIC', `PROFIT_THRESHOLD = ${PROFIT_THRESHOLD}`, 'debug');
-    logger('LOGIC', `STOP_LOSS_THRESHOLD = ${STOP_LOSS_THRESHOLD}`, 'debug');
-    logger('LOGIC', `${percentageDiff >= PROFIT_THRESHOLD || percentageDiff <= STOP_LOSS_THRESHOLD}`, 'debug');
-
-    if (percentageDiff >= PROFIT_THRESHOLD || percentageDiff <= STOP_LOSS_THRESHOLD) {
-        lastOpPrice = binance.placeSellOrder('ETHBTC');
-        isNextOperationBuy = binance.operation.BUY;
-        logger('TRY-TO-SELL', `percentageDiff => '${percentageDiff}'`, 'INFO');
-        return lastOpPrice;
-    }
-    logger('LOGIC', "Can't place order...", 'debug');
-};
-
 const startBot = async () => {
-    logger('SYSTEM', `######## Starting BOT ########`, 'info');
+    logger('SYSTEM', `######## Starting BOT with PID: ${pid} ########`, 'info');
 
     while (binance) {
         try {
@@ -109,4 +113,36 @@ const startBot = async () => {
     }
 };
 
-startBot();
+const stopBot = async (proc) => {
+    logger('SYSTEM', `######## Stopping BOT with PID: ${proc} ########`, 'info');
+    try {
+        await binance.cancelOrder(await binance.getOperationDetails());
+        process.kill(proc, 'SIGTERM');
+        process.exit(0);
+    } catch (critical) {
+        logger('SYSTEM', `Command failed, FATAL ERROR => '${critical}'`, 'CRITICAL');
+        process.exit(1);
+    }
+};
+
+process.on('message', (message) => {
+    console.log(`CHILD: message from parent: ${message.cmd}`);
+    logger('CHILD', `CHILD: message from parent: ${message.cmd}`, 'telegram');
+    if (message.cmd === 'START') {
+        console.log(`Starting bot with PID: ${process.pid}`);
+        logger('CHILD', `Starting bot with PID: ${process.pid}`, 'telegram');
+        startBot();
+        process.send(process.pid);
+    } else if (message.cmd === 'STOP') {
+        console.log(`Stopping bot with PID: ${message.pid}`);
+        logger('CHILD', `Stopping bot with PID: ${message.pid}`, 'telegram');
+        stopBot(message.pid);
+    } else {
+        process.exit(1);
+    }
+});
+
+process.on('SIGTERM', killProc);
+process.on('exit', killProc);
+
+module.exports = { startBot, stopBot };

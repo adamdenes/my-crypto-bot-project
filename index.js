@@ -1,3 +1,5 @@
+/* eslint-disable prefer-destructuring */
+/* eslint-disable no-plusplus */
 /* eslint-disable no-console */
 /* eslint-disable no-unused-vars */
 /* eslint-disable class-methods-use-this */
@@ -395,7 +397,7 @@ class Client {
                     'Content-type': 'x-www-form-urlencoded',
                 },
             });
-            // logger('CANCEL-ORDER', `GET cancelOrder() success, orderId => '${query.orderId}'`, 'error');
+            logger('CANCEL-ORDER', `Order canceled, orderId => '${query.orderId}'`, 'error');
             return response;
         } catch (error) {
             logger('CANCEL-ORDER', `GET cancelOrder() failed => '${error}'`, 'error');

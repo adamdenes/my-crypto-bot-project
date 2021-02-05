@@ -48,4 +48,9 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const offset = (server, date) => server - date;
 
-module.exports = { getData, postData, queryString, sleep, offset };
+const killProc = () => {
+    console.log(`Process exit ${process.pid}`);
+    process.exit(0);
+};
+
+module.exports = { getData, postData, queryString, sleep, offset, killProc };

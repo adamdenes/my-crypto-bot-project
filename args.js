@@ -1,7 +1,7 @@
+/* eslint-disable no-console */
 const process = require('process');
 const config = require('./config.json');
 const Client = require('./index');
-const { writeData } = require('./log');
 
 const binance = new Client(config.apiKey, config.apiSecret);
 const myArgs = process.argv.slice(2);
