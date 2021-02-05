@@ -8,8 +8,8 @@ class Bot {
         this.replyKeyboard = {
             keyboard: [],
             resize_keyboard: true,
-            one_time_keyboard: true,
-            force_reply: true
+            one_time_keyboard: false,
+            force_reply: true,
         };
     }
 
@@ -18,7 +18,7 @@ class Bot {
     }
 
     set token(newToken) {
-        if (!newToken instanceof String) {
+        if (typeof newToken !== 'string') {
             console.log(`Expected string, got ${typeof newToken}`);
         } else {
             this._token = newToken;
@@ -31,14 +31,6 @@ class Bot {
 
     set url(newUrl) {
         this._url = newUrl;
-    }
-
-    set replyKeyboardCommands(cmd) {
-        if (isArray(cmd)){
-            this._replyKeyboard.keyboard = [...cmd];
-        } else {
-            this._replyKeyboard.keyboard.push = cmd;
-        }
     }
 
     async getMe() {
@@ -63,20 +55,26 @@ class Bot {
         return response;
     }
 
+    async deleteWebhook(hook) {
+        const query = queryString({ drop_pending_updates: true, url: hook });
+        const response = await postData(`${this.url + this.token}/deleteWebhook?${query}`);
+        return response;
+    }
+
     async sendMessage(chatId, text, reply_markup = {}) {
         try {
             const response = await fetch(`${this.url + this.token}/sendMessage`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ chat_id: chatId, text: text, reply_markup: reply_markup })
+                body: JSON.stringify({ chat_id: chatId, text: text, reply_markup: reply_markup }),
             });
-
+            console.log(JSON.stringify({ chat_id: chatId, text: text, reply_markup: reply_markup }));
             if (response.ok) {
                 const jsonString = response.json();
                 return jsonString;
             }
         } catch (error) {
-            console.log(error);  
+            console.log(error);
         }
     }
 }
