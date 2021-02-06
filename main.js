@@ -128,6 +128,7 @@ const stopBot = async (proc) => {
 process.on('message', (message) => {
     console.log(`CHILD: message from parent: ${message.cmd}`);
     logger('CHILD', `CHILD: message from parent: ${message.cmd}`, 'telegram');
+
     if (message.cmd === 'START') {
         console.log(`Starting bot with PID: ${process.pid}`);
         logger('CHILD', `Starting bot with PID: ${process.pid}`, 'telegram');
@@ -137,6 +138,24 @@ process.on('message', (message) => {
         console.log(`Stopping bot with PID: ${message.pid}`);
         logger('CHILD', `Stopping bot with PID: ${message.pid}`, 'telegram');
         stopBot(message.pid);
+        process.send(`Stopped bot with PID: ${message.pid}`);
+        process.exit(0);
+    } else if (message.cmd === 'STATUS') {
+        console.log('Querying API for order status');
+        logger('CHILD', 'Querying API for order status', 'telegram');
+        binance
+            .getOperationDetails()
+            .then((response) => {
+                if (response.length === 0) {
+                    process.send('There is no open order currently.');
+                    process.exit(0);
+                } else {
+                    for (const item of response) {
+                        process.send(item);
+                    }
+                }
+            })
+            .catch((error) => process.send(error));
     } else {
         process.exit(1);
     }

@@ -15,7 +15,7 @@ const url = 'https://api.telegram.org/bot';
 const testBot = new Bot(config.telegramToken, url);
 // testBot.getMe().then(r => console.log(r));
 // testBot.getUpdates().then(r => console.log(r));
-// testBot.deleteWebhook(config.webhook).then((r) => console.log(r));
+// testBot.deleteWebhook(config.webhook);
 testBot.setWebhook(config.webhook);
 // testBot.getWebhookInfo().then((r) => console.log(r));
 let procPid = 0;
@@ -62,15 +62,15 @@ app.post('/hook', (req, res) => {
 
         // Start the application in a different process
         const start = fork(`${__dirname}/../main.js`, { silent: true });
-        console.log(`Forked process PID: ${start.pid}`);
+        // console.log(`Forked start process PID: ${start.pid}`);
 
         start.on('exit', (code) => {
-            console.log(`Child process exited with code ${code}`);
-            logger('PARENT', `Child process exited with code ${code}`, 'telegram');
+            // console.log(`Child process 'START' exited with code ${code}`);
+            logger('PARENT', `Child process 'START' exited with code ${code}`, 'telegram');
         });
 
         start.on('message', (message) => {
-            console.log(`PARENT: message from child: my PID is '${message}'`);
+            // console.log(`PARENT: message from child: my PID is '${message}'`);
             logger('PARENT', `PARENT: message from child: my PID is '${message}'`, 'telegram');
             procPid = message;
         });
@@ -88,16 +88,17 @@ app.post('/hook', (req, res) => {
 
         // Stop the application in a different process
         const stop = fork(`${__dirname}/../main.js`, { silent: true });
-        console.log(`Forked process PID: ${stop.pid}`);
+        // console.log(`Forked stop process PID: ${stop.pid}`);
 
         stop.on('exit', (code) => {
-            console.log(`Child process exited with code ${code}`);
-            logger('PARENT', `Child process exited with code ${code}`, 'telegram');
+            // console.log(`Child process 'STOP' exited with code ${code}`);
+            logger('PARENT', `Child process 'STOP' exited with code ${code}`, 'telegram');
         });
 
         stop.on('message', (message) => {
-            console.log(`PARENT: message from child: my PID is '${message}'`);
-            logger('PARENT', `PARENT: message from child: my PID is '${message};'`, 'telegram');
+            // console.log(`PARENT: message from child: '${message}'`);
+            logger('PARENT', `PARENT: message from child: '${message}'`, 'telegram');
+            process.kill(procPid, 'SIGTERM');
         });
 
         stop.send({ cmd: 'STOP', pid: procPid });
@@ -106,10 +107,32 @@ app.post('/hook', (req, res) => {
         //     console.log(`stopBot() : ${data}`);
         // });
     } else if (msg.match(/\/status/gi)) {
-        testBot
-            .sendMessage(chatId, 'Current status! ❓', {})
-            .then((r) => res.status(200).send(r))
-            .catch((error) => res.send(error));
+        const status = fork(`${__dirname}/../main.js`, { silent: true });
+        // console.log(`Forked status process PID: ${status.pid}`);
+
+        status.on('exit', (code) => {
+            // console.log(`Child process 'STATUS' exited with code ${code}`);
+            logger('PARENT', `Child process 'STATUS' exited with code ${code}`, 'telegram');
+        });
+
+        status.on('message', (message) => {
+            if (message === undefined) status.kill('SIGTERM');
+            // console.log(`PARENT: message from child: '${message.side}'`);
+            logger('PARENT', `PARENT: message from child: '${message.side}'`, 'telegram');
+
+            const displayMsg = `<pre>----------------------\nSymbol  :   ${message.symbol}\nPrice   :   ${message.price}\nQuantity:   ${message.origQty}\nOrderId :   ${message.orderId}\nSide    :   ${message.side}</pre>`.trim();
+            testBot
+                .sendMessage(chatId, displayMsg, {}, 'HTML')
+                .then((r) => res.status(200).send(r))
+                .catch((error) => res.send(error));
+            status.kill('SIGTERM');
+        });
+
+        status.send({ cmd: 'STATUS' });
+
+        // status.stdout.on('data', (data) => {
+        //     console.log(`getOperationDetails() : ${data}`);
+        // });
     } else {
         testBot
             .sendMessage(chatId, 'Unknown command... 😕', {})

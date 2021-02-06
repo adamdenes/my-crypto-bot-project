@@ -1,3 +1,4 @@
+/* eslint-disable object-shorthand */
 /* eslint-disable no-console */
 const fetch = require('node-fetch');
 const { getData, postData, queryString } = require('../helper.js');
@@ -62,13 +63,18 @@ class Bot {
         return response;
     }
 
-    async sendMessage(chatId, text, reply_markup = {}) {
+    async sendMessage(chatId, text, reply_markup = {}, parse_mode = '') {
         try {
             const response = await fetch(`${this.url + this.token}/sendMessage`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 // eslint-disable-next-line object-shorthand
-                body: JSON.stringify({ chat_id: chatId, text: text, reply_markup: reply_markup }),
+                body: JSON.stringify({
+                    chat_id: chatId,
+                    text: text,
+                    reply_markup: reply_markup,
+                    parse_mode: parse_mode,
+                }),
             });
             // console.log(JSON.stringify({ chat_id: chatId, text: text, reply_markup: reply_markup }));
             if (response.ok) {

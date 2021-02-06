@@ -8,6 +8,9 @@ const myArgs = process.argv.slice(2);
 console.log(myArgs);
 
 switch (myArgs[0].toLowerCase()) {
+    case '--orders':
+        binance.getOperationDetails().then((r) => console.log(r));
+        break;
     case '-c' || '--cancel':
         binance.cancelOrder(binance.getOperationDetails()).then((r) => console.log(r));
         break;
