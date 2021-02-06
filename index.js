@@ -7,7 +7,7 @@ const crypto = require('crypto');
 const fetch = require('node-fetch');
 const { queryString, sleep, offset } = require('./helper');
 const { logger, writeData, convertArrToJson } = require('./log');
-const config = require('./config.json');
+// const config = require('./config.json');
 
 class Client {
     constructor(apiKey, apiSecret) {
@@ -502,13 +502,13 @@ class Client {
 
 module.exports = Client;
 
-const client = new Client(config.apiKey, config.apiSecret);
+// const client = new Client(config.apiKey, config.apiSecret);
 
 // ##################### TESTING CLASS METHODS #####################
 // writeData(client.getCandlestickData('ETHBTC', '1d', 2), 'ETHBTC', '1d', 'w');
 // client.downloadCandelSticks('ETHBTC', '1d', 2).then((mp) => console.log(mp));
 
-client.cancelAllOrders('BTCUSDT').then((mp) => console.log(mp));
+// client.cancelAllOrders('BTCUSDT').then((mp) => console.log(mp));
 // client.getCandlestickData('ETHBTC', '1d', 1612209599999, 1612223999999).then((mp) => console.log(mp));
 // client.getAccountInfo().then((mp) => console.log(mp));
 // client.exchangeInfo().then((mp) => console.log(mp));
