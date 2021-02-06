@@ -116,9 +116,13 @@ const startBot = async () => {
 const stopBot = async (proc) => {
     logger('SYSTEM', `######## Stopping BOT with PID: ${proc} ########`, 'info');
     try {
-        await binance.cancelOrder(await binance.getOperationDetails());
-        process.kill(proc, 'SIGTERM');
-        process.exit(0);
+        const details = await binance.cancelOrder(await binance.getOperationDetails());
+        if (details === undefined || details.length === 0) {
+            process.send('DEAD');
+            process.exit(0);
+        } else {
+            process.kill(proc, 'SIGTERM');
+        }
     } catch (critical) {
         logger('SYSTEM', `Command failed, FATAL ERROR => '${critical}'`, 'CRITICAL');
         process.exit(1);
@@ -130,18 +134,26 @@ process.on('message', (message) => {
     logger('CHILD', `CHILD: message from parent: ${message.cmd}`, 'telegram');
 
     if (message.cmd === 'START') {
-        console.log(`Starting bot with PID: ${process.pid}`);
+        // console.log(`Starting bot with PID: ${process.pid}`);
         logger('CHILD', `Starting bot with PID: ${process.pid}`, 'telegram');
         startBot();
         process.send(process.pid);
     } else if (message.cmd === 'STOP') {
-        console.log(`Stopping bot with PID: ${message.pid}`);
-        logger('CHILD', `Stopping bot with PID: ${message.pid}`, 'telegram');
-        stopBot(message.pid);
-        process.send(`Stopped bot with PID: ${message.pid}`);
-        process.exit(0);
+        if (message.pid === 0) {
+            // console.log('PID is 0! ---> just cancel orders');
+            logger('CHILD', 'PID is 0! ---> just cancel orders', 'telegram');
+            Promise.resolve(binance.cancelAllOrders());
+            process.exit(0);
+            // console.log('ORDERS CANCELLED!');
+        } else {
+            // console.log(`Stopping bot with PID: ${message.pid}`);
+            logger('CHILD', `Stopping bot with PID: ${message.pid}`, 'telegram');
+            stopBot(message.pid);
+            process.send(`Stopped bot with PID: ${message.pid}`);
+            // process.exit(0);
+        }
     } else if (message.cmd === 'STATUS') {
-        console.log('Querying API for order status');
+        // console.log('Querying API for order status');
         logger('CHILD', 'Querying API for order status', 'telegram');
         binance
             .getOperationDetails()

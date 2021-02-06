@@ -81,11 +81,6 @@ app.post('/hook', (req, res) => {
         //     console.log(`startBot() : ${data}`);
         // });
     } else if (msg.match(/\/stop/gi)) {
-        testBot
-            .sendMessage(chatId, 'Stop trading! ❌', {})
-            .then((r) => res.status(200).send(r))
-            .catch((error) => res.send(error));
-
         // Stop the application in a different process
         const stop = fork(`${__dirname}/../main.js`, { silent: true });
         // console.log(`Forked stop process PID: ${stop.pid}`);
@@ -98,14 +93,20 @@ app.post('/hook', (req, res) => {
         stop.on('message', (message) => {
             // console.log(`PARENT: message from child: '${message}'`);
             logger('PARENT', `PARENT: message from child: '${message}'`, 'telegram');
-            process.kill(procPid, 'SIGTERM');
+            if (message !== 'DEAD') {
+                process.kill(procPid, 'SIGTERM');
+            }
         });
 
         stop.send({ cmd: 'STOP', pid: procPid });
 
-        // stop.stdout.on('data', (data) => {
-        //     console.log(`stopBot() : ${data}`);
-        // });
+        stop.stdout.on('data', (data) => {
+            console.log(`stopBot() : ${data}`);
+        });
+        testBot
+            .sendMessage(chatId, 'Stop trading! ❌', {})
+            .then((r) => res.status(200).send(r))
+            .catch((error) => res.send(error));
     } else if (msg.match(/\/status/gi)) {
         const status = fork(`${__dirname}/../main.js`, { silent: true });
         // console.log(`Forked status process PID: ${status.pid}`);
@@ -120,7 +121,11 @@ app.post('/hook', (req, res) => {
             // console.log(`PARENT: message from child: '${message.side}'`);
             logger('PARENT', `PARENT: message from child: '${message.side}'`, 'telegram');
 
-            const displayMsg = `<pre>----------------------\nSymbol  :   ${message.symbol}\nPrice   :   ${message.price}\nQuantity:   ${message.origQty}\nOrderId :   ${message.orderId}\nSide    :   ${message.side}</pre>`.trim();
+            const displayMsg = `<pre>----------------------\nSymbol  :   ${message.symbol}\nPrice   :   ${Number(
+                message.price
+            ).toFixed(2)}\nQuantity:   ${message.origQty}\nOrderId :   ${message.orderId}\nSide    :   ${
+                message.side
+            }</pre>`.trim();
             testBot
                 .sendMessage(chatId, displayMsg, {}, 'HTML')
                 .then((r) => res.status(200).send(r))

@@ -109,7 +109,6 @@ class Client {
     async postRequest(endpoint, data) {
         try {
             const response = await fetch(endpoint, data);
-            console.log(response)
             if (response.ok) {
                 const jsonResponse = await response.json();
                 return jsonResponse;
