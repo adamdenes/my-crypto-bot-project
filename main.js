@@ -168,6 +168,10 @@ process.on('message', (message) => {
                 }
             })
             .catch((error) => process.send(error));
+    } else if (message.cmd === 'BALANCE') {
+        // console.log('Getting account balance from API');
+        logger('CHILD', 'Getting account balance from API', 'telegram');
+        binance.usdTotal().then((r) => process.send(r));
     } else {
         process.exit(1);
     }

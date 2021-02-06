@@ -39,7 +39,7 @@ app.post('/hook', (req, res) => {
     console.log(`chat_id: ${chatId}, text: ${msg}`);
 
     testBot.replyKeyboard = {
-        keyboard: [['/hello', '/start', '/stop', '/status']],
+        keyboard: [['/hello'], ['/start', '/stop'], ['/status', '/balance']],
         resize_keyboard: true,
         one_time_keyboard: false,
         force_reply: true,
@@ -138,6 +138,26 @@ app.post('/hook', (req, res) => {
         // status.stdout.on('data', (data) => {
         //     console.log(`getOperationDetails() : ${data}`);
         // });
+    } else if (msg.match(/\/balance/gi)) {
+        const balance = fork(`${__dirname}/../main.js`, { silent: true });
+        console.log(`Forked status process PID: ${balance.pid}`);
+
+        balance.on('exit', (code) => {
+            console.log(`Child process 'BALANCE' exited with code ${code}`);
+        });
+
+        balance.on('message', (message) => {
+            console.log(`PARENT: message from child: '${message}'`);
+
+            const displayMsg = `Balance: $${Number(message).toFixed(2)}💰`;
+            testBot
+                .sendMessage(chatId, displayMsg, {}, 'HTML')
+                .then((r) => res.status(200).send(r))
+                .catch((error) => res.send(error));
+            balance.kill('SIGTERM');
+        });
+
+        balance.send({ cmd: 'BALANCE' });
     } else {
         testBot
             .sendMessage(chatId, 'Unknown command... 😕', {})
