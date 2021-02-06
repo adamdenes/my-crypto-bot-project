@@ -29,6 +29,9 @@ switch (myArgs[0].toLowerCase()) {
     case '--balance':
         binance.usdTotal().then((r) => console.log(`$${r.toFixed(2)}`));
         break;
+    case '-b':
+        binance.getBalances().then((r) => console.log(r));
+        break;
     default:
         break;
 }
