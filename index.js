@@ -7,7 +7,7 @@ const crypto = require('crypto');
 const fetch = require('node-fetch');
 const { queryString, sleep, offset } = require('./helper');
 const { logger, writeData, convertArrToJson } = require('./log');
-// const config = require('./config.json');
+const config = require('./config.json');
 
 class Client {
     constructor(apiKey, apiSecret) {
@@ -109,6 +109,7 @@ class Client {
     async postRequest(endpoint, data) {
         try {
             const response = await fetch(endpoint, data);
+            console.log(response)
             if (response.ok) {
                 const jsonResponse = await response.json();
                 return jsonResponse;
@@ -397,10 +398,33 @@ class Client {
                     'Content-type': 'x-www-form-urlencoded',
                 },
             });
-            logger('CANCEL-ORDER', `Order canceled, orderId => '${query.orderId}'`, 'error');
+            logger('CANCEL-ORDER', `Order cancelled, orderId => '${query.orderId}'`, 'error');
             return response;
         } catch (error) {
             logger('CANCEL-ORDER', `GET cancelOrder() failed => '${error}'`, 'error');
+        }
+    }
+
+    async cancelAllOrders(sym = 'ETHBTC') {
+        try {
+            const serverTime = await this.adjustTimestamp(this.getServerTime());
+            const query = queryString({
+                symbol: sym,
+                recvWindow: 5000,
+                timestamp: serverTime,
+            });
+            const sig = this.signature(query);
+            const response = await this.postRequest(`${this.base}api/v3/openOrders?${query}&signature=${sig}`, {
+                method: 'DELETE',
+                headers: {
+                    'X-MBX-APIKEY': this.apiKey,
+                    'Content-type': 'x-www-form-urlencoded',
+                },
+            });
+            logger('CANCEL-ALL', `Order(s) cancelled`, 'error');
+            return response;
+        } catch (error) {
+            logger('CANCEL-ALL', `GET cancelAllOrders() failed => '${error}'`, 'error');
         }
     }
 
@@ -478,12 +502,13 @@ class Client {
 
 module.exports = Client;
 
-// const client = new Client(config.apiKey, config.apiSecret);
+const client = new Client(config.apiKey, config.apiSecret);
 
 // ##################### TESTING CLASS METHODS #####################
 // writeData(client.getCandlestickData('ETHBTC', '1d', 2), 'ETHBTC', '1d', 'w');
 // client.downloadCandelSticks('ETHBTC', '1d', 2).then((mp) => console.log(mp));
 
+client.cancelAllOrders('BTCUSDT').then((mp) => console.log(mp));
 // client.getCandlestickData('ETHBTC', '1d', 1612209599999, 1612223999999).then((mp) => console.log(mp));
 // client.getAccountInfo().then((mp) => console.log(mp));
 // client.exchangeInfo().then((mp) => console.log(mp));
