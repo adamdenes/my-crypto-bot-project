@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 const fetch = require('node-fetch');
-const { getData, postData, queryString } = require('./helper.js');
+const { getData, postData, queryString } = require('../helper.js');
 
 class Bot {
     constructor(token, url) {

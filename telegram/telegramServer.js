@@ -6,8 +6,8 @@ const app = express();
 const bodyParser = require('body-parser');
 
 const Bot = require('./telegramBot.js');
-const config = require('./config.json');
-const { logger } = require('./log.js');
+const config = require('../config.json');
+const { logger } = require('../log.js');
 
 const port = 16666;
 const url = 'https://api.telegram.org/bot';
@@ -24,8 +24,18 @@ app.use(bodyParser.json());
 
 app.post('/hook', (req, res) => {
     // console.log(req.body);
-    const chatId = req.body.message.chat.id;
-    const msg = req.body.message.text || req.body.message.sticker.emoji;
+    let chatId = null;
+    let msg = null;
+
+    // Handle messages when they stuck in 'edited' state...
+    if (req.body.message === undefined) {
+        chatId = req.body.edited_message.chat.id;
+        msg = req.body.edited_message.text || req.body.edited_message.sticker.emoji;
+    } else {
+        chatId = req.body.message.chat.id;
+        msg = req.body.message.text || req.body.message.sticker.emoji;
+    }
+
     console.log(`chat_id: ${chatId}, text: ${msg}`);
 
     testBot.replyKeyboard = {
@@ -51,7 +61,8 @@ app.post('/hook', (req, res) => {
             .catch((error) => res.send(error));
 
         // Start the application in a different process
-        const start = fork(`${__dirname}/main.js`, { silent: true });
+        const start = fork(`${__dirname}/../main.js`, { silent: true });
+        console.log(`Forked process PID: ${start.pid}`);
 
         start.on('exit', (code) => {
             console.log(`Child process exited with code ${code}`);
@@ -59,48 +70,15 @@ app.post('/hook', (req, res) => {
         });
 
         start.on('message', (message) => {
-            console.log(`PARENT: message from child: ${message}`);
-            logger('PARENT', `PARENT: message from child: ${message}`, 'telegram');
+            console.log(`PARENT: message from child: my PID is '${message}'`);
+            logger('PARENT', `PARENT: message from child: my PID is '${message}'`, 'telegram');
             procPid = message;
         });
 
         start.send({ cmd: 'START' });
 
-        start.stdout.on('data', (data) => {
-            console.log(`startBot() : ${data}`);
-        });
-
-        // const start = spawn('node', ['args.js', '--start']);
-        // console.log(`Spawned child pid: ${start.pid}`);
-
         // start.stdout.on('data', (data) => {
-        //     console.log(`stdout: ${data}`);
-        // });
-
-        // start.stderr.on('data', (data) => {
-        //     console.error(`stderr: ${data}`);
-        // });
-
-        // start.on('error', (error) => {
-        //     console.error(`error: ${error.message}`);
-        // });
-
-        // start.on('close', (code) => {
-        //     console.log(`child process exited with code ${code}`);
-        // });
-
-        // exec('node args.js --start', (error, stdout, stderr) => {
-        //     if (error) {
-        //         console.error(`error: ${error.message}`);
-        //         return;
-        //     }
-
-        //     if (stderr) {
-        //         console.error(`stderr: ${stderr}`);
-        //         return;
-        //     }
-
-        //     console.log(`stdout:\n${stdout}`);
+        //     console.log(`startBot() : ${data}`);
         // });
     } else if (msg.match(/\/stop/gi)) {
         testBot
@@ -109,7 +87,8 @@ app.post('/hook', (req, res) => {
             .catch((error) => res.send(error));
 
         // Stop the application in a different process
-        const stop = fork(`${__dirname}/main.js`, { silent: true });
+        const stop = fork(`${__dirname}/../main.js`, { silent: true });
+        console.log(`Forked process PID: ${stop.pid}`);
 
         stop.on('exit', (code) => {
             console.log(`Child process exited with code ${code}`);
@@ -117,45 +96,14 @@ app.post('/hook', (req, res) => {
         });
 
         stop.on('message', (message) => {
-            console.log(`PARENT: message from child: ${message}`);
-            logger('PARENT', `PARENT: message from child: ${message}`, 'telegram');
+            console.log(`PARENT: message from child: my PID is '${message}'`);
+            logger('PARENT', `PARENT: message from child: my PID is '${message};'`, 'telegram');
         });
 
         stop.send({ cmd: 'STOP', pid: procPid });
-        stop.stdout.on('data', (data) => {
-            console.log(`stopBot() : ${data}`);
-        });
-        // const stop = spawn('node', ['args.js', '--stop']);
-        // console.log(`Spawned child pid: ${stop.pid}`);
 
         // stop.stdout.on('data', (data) => {
-        //     console.log(`stdout: ${data}`);
-        // });
-
-        // stop.stderr.on('data', (data) => {
-        //     console.error(`stderr: ${data}`);
-        // });
-
-        // stop.on('error', (error) => {
-        //     console.error(`error: ${error.message}`);
-        // });
-
-        // stop.on('close', (code) => {
-        //     console.log(`child process exited with code ${code}`);
-        // });
-
-        // exec('node args.js --stop', (error, stdout, stderr) => {
-        //     if (error) {
-        //         console.error(`error: ${error.message}`);
-        //         return;
-        //     }
-
-        //     if (stderr) {
-        //         console.error(`stderr: ${stderr}`);
-        //         return;
-        //     }
-
-        //     console.log(`stdout:\n${stdout}`);
+        //     console.log(`stopBot() : ${data}`);
         // });
     } else if (msg.match(/\/status/gi)) {
         testBot
