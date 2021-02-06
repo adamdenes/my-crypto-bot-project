@@ -82,13 +82,13 @@ class Client {
 
         info[2].forEach((element) => {
             if (element.asset === 'BTC') {
-                balanceInUSD += +element.free * info[0];
+                balanceInUSD += (+element.free + +element.locked) * info[0];
             }
             if (element.asset === 'ETH') {
-                balanceInUSD += +element.free * info[1];
+                balanceInUSD += (+element.free + +element.locked) * info[1];
             }
             if (element.asset === 'USDT') {
-                balanceInUSD += +element.free;
+                balanceInUSD += +element.free + +element.locked;
             }
         });
         // logger('BALANCE', `balance => '$${balanceInUSD.toFixed(2)}'`, 'info');

@@ -56,7 +56,7 @@ app.post('/hook', (req, res) => {
             .catch((error) => res.send(error));
     } else if (msg.match(/\/start/gi)) {
         testBot
-            .sendMessage(chatId, 'Start trading! ✅', {})
+            .sendMessage(chatId, 'Start trading! ✅', testBot.replyKeyboard)
             .then((r) => res.status(200).send(r))
             .catch((error) => res.send(error));
 
@@ -93,8 +93,8 @@ app.post('/hook', (req, res) => {
         stop.on('message', (message) => {
             // console.log(`PARENT: message from child: '${message}'`);
             logger('PARENT', `PARENT: message from child: '${message}'`, 'telegram');
-            if (message !== 'DEAD') {
-                process.kill(procPid, 'SIGTERM');
+            if (message !== 'DEAD' || message !== 'CANCELLED') {
+                process.kill(procPid, 'SIGKILL');
             }
         });
 
@@ -104,7 +104,7 @@ app.post('/hook', (req, res) => {
             console.log(`stopBot() : ${data}`);
         });
         testBot
-            .sendMessage(chatId, 'Stop trading! ❌', {})
+            .sendMessage(chatId, 'Stop trading! ❌', testBot.replyKeyboard)
             .then((r) => res.status(200).send(r))
             .catch((error) => res.send(error));
     } else if (msg.match(/\/status/gi)) {
@@ -117,7 +117,7 @@ app.post('/hook', (req, res) => {
         });
 
         status.on('message', (message) => {
-            if (message === undefined) status.kill('SIGTERM');
+            if (message === undefined) status.kill('SIGKILL');
             // console.log(`PARENT: message from child: '${message.side}'`);
             logger('PARENT', `PARENT: message from child: '${message.side}'`, 'telegram');
 
@@ -127,10 +127,10 @@ app.post('/hook', (req, res) => {
                 message.side
             }</pre>`.trim();
             testBot
-                .sendMessage(chatId, displayMsg, {}, 'HTML')
+                .sendMessage(chatId, displayMsg, testBot.replyKeyboard, 'HTML')
                 .then((r) => res.status(200).send(r))
                 .catch((error) => res.send(error));
-            status.kill('SIGTERM');
+            status.kill('SIGKILL');
         });
 
         status.send({ cmd: 'STATUS' });
@@ -140,27 +140,29 @@ app.post('/hook', (req, res) => {
         // });
     } else if (msg.match(/\/balance/gi)) {
         const balance = fork(`${__dirname}/../main.js`, { silent: true });
-        console.log(`Forked status process PID: ${balance.pid}`);
+        // console.log(`Forked balance process PID: ${balance.pid}`);
 
         balance.on('exit', (code) => {
-            console.log(`Child process 'BALANCE' exited with code ${code}`);
+            // console.log(`Child process 'BALANCE' exited with code ${code}`);
+            logger('PARENT', `Child process 'BALANCE' exited with code ${code}`, 'telegram');
         });
 
         balance.on('message', (message) => {
-            console.log(`PARENT: message from child: '${message}'`);
+            // console.log(`PARENT: message from child: '${message}'`);
+            logger('PARENT', `PARENT: message from child: '${message}'`, 'telegram');
 
             const displayMsg = `Balance: $${Number(message).toFixed(2)}💰`;
             testBot
-                .sendMessage(chatId, displayMsg, {}, 'HTML')
+                .sendMessage(chatId, displayMsg, testBot.replyKeyboard, 'HTML')
                 .then((r) => res.status(200).send(r))
                 .catch((error) => res.send(error));
-            balance.kill('SIGTERM');
+            balance.kill('SIGKILL');
         });
 
         balance.send({ cmd: 'BALANCE' });
     } else {
         testBot
-            .sendMessage(chatId, 'Unknown command... 😕', {})
+            .sendMessage(chatId, 'Unknown command... 😕', testBot.replyKeyboard)
             .then((r) => res.status(200).send(r))
             .catch((error) => res.send(error));
     }

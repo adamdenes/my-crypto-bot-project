@@ -116,12 +116,14 @@ const startBot = async () => {
 const stopBot = async (proc) => {
     logger('SYSTEM', `######## Stopping BOT with PID: ${proc} ########`, 'info');
     try {
-        const details = await binance.cancelOrder(await binance.getOperationDetails());
+        const details = await binance.getOperationDetails();
         if (details === undefined || details.length === 0) {
             process.send('DEAD');
             process.exit(0);
         } else {
-            process.kill(proc, 'SIGTERM');
+            // [SYSTEM] Command failed, FATAL ERROR => 'Error: kill ESRCH' ?
+            await binance.cancelOrder(details);
+            process.kill(proc, 'SIGKILL');
         }
     } catch (critical) {
         logger('SYSTEM', `Command failed, FATAL ERROR => '${critical}'`, 'CRITICAL');
@@ -139,18 +141,16 @@ process.on('message', (message) => {
         startBot();
         process.send(process.pid);
     } else if (message.cmd === 'STOP') {
-        if (message.pid === 0) {
+        const orders = binance.getOperationDetails();
+        if (message.pid === 0 && orders !== undefined) {
             // console.log('PID is 0! ---> just cancel orders');
             logger('CHILD', 'PID is 0! ---> just cancel orders', 'telegram');
-            Promise.resolve(binance.cancelAllOrders());
-            process.exit(0);
-            // console.log('ORDERS CANCELLED!');
+            binance.cancelAllOrders('ETHBTC').then(process.send('CANCELLED'));
         } else {
             // console.log(`Stopping bot with PID: ${message.pid}`);
             logger('CHILD', `Stopping bot with PID: ${message.pid}`, 'telegram');
             stopBot(message.pid);
             process.send(`Stopped bot with PID: ${message.pid}`);
-            // process.exit(0);
         }
     } else if (message.cmd === 'STATUS') {
         // console.log('Querying API for order status');
