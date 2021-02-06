@@ -63,7 +63,7 @@ class Bot {
         return response;
     }
 
-    async sendMessage(chatId, text, reply_markup = {}, parse_mode = '') {
+    async sendMessage(chatId, text, keyboard = {}, parse_mode = '') {
         try {
             const response = await fetch(`${this.url + this.token}/sendMessage`, {
                 method: 'POST',
@@ -72,11 +72,10 @@ class Bot {
                 body: JSON.stringify({
                     chat_id: chatId,
                     text: text,
-                    reply_markup: reply_markup,
+                    reply_markup: keyboard,
                     parse_mode: parse_mode,
                 }),
             });
-            // console.log(JSON.stringify({ chat_id: chatId, text: text, reply_markup: reply_markup }));
             if (response.ok) {
                 const jsonString = response.json();
                 return jsonString;
