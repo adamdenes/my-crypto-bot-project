@@ -1,7 +1,6 @@
 /* eslint-disable no-plusplus */
 /* eslint-disable no-console */
 const fs = require('fs');
-const process = require('process');
 
 /**
  * Converts the array to an object
@@ -102,7 +101,10 @@ const readDir = async (path, fileName) => {
  */
 const logToFile = async (msg) => {
     const time = new Date().toISOString().split('T');
-    const path = process.cwd();
+    const path = `${__dirname}/logs/`;
+    // create log folder, unless it exists
+    await fs.promises.mkdir(path, { recursive: true });
+
     const fname = `bot${time[0]}_${time[1].slice(0, 5)}.txt`;
     const file = await readDir(path, fname);
     // there is no file with that date

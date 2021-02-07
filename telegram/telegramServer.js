@@ -27,7 +27,7 @@ app.post('/hook', (req, res) => {
     let chatId = null;
     let msg = null;
 
-    // Handle messages when they stuck in 'edited' state...
+    // Handle messages when they get stuck in 'edited' state...
     if (req.body.message === undefined) {
         chatId = req.body.edited_message.chat.id;
         msg = req.body.edited_message.text || req.body.edited_message.sticker.emoji;
