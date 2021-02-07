@@ -17,7 +17,7 @@ const testBot = new Bot(config.telegramToken, url);
 // testBot.getUpdates().then(r => console.log(r));
 // testBot.deleteWebhook(config.webhook);
 testBot.setWebhook(config.webhook);
-// testBot.getWebhookInfo().then((r) => console.log(r));
+testBot.getWebhookInfo().then((r) => console.log(r));
 let procPid = 0;
 
 app.use(bodyParser.json());
@@ -93,16 +93,13 @@ app.post('/hook', (req, res) => {
         stop.on('message', (message) => {
             // console.log(`PARENT: message from child: '${message}'`);
             logger('PARENT', `PARENT: message from child: '${message}'`, 'telegram');
-            if (message !== 'DEAD' || message !== 'CANCELLED') {
-                process.kill(procPid, 'SIGKILL');
-            }
         });
 
         stop.send({ cmd: 'STOP', pid: procPid });
 
-        stop.stdout.on('data', (data) => {
-            console.log(`stopBot() : ${data}`);
-        });
+        // stop.stdout.on('data', (data) => {
+        //     console.log(`stopBot() : ${data}`);
+        // });
         testBot
             .sendMessage(chatId, 'Stop trading! ❌', testBot.replyKeyboard)
             .then((r) => res.status(200).send(r))
@@ -130,7 +127,6 @@ app.post('/hook', (req, res) => {
                 .sendMessage(chatId, displayMsg, testBot.replyKeyboard, 'HTML')
                 .then((r) => res.status(200).send(r))
                 .catch((error) => res.send(error));
-            status.kill('SIGKILL');
         });
 
         status.send({ cmd: 'STATUS' });
@@ -156,7 +152,6 @@ app.post('/hook', (req, res) => {
                 .sendMessage(chatId, displayMsg, testBot.replyKeyboard, 'HTML')
                 .then((r) => res.status(200).send(r))
                 .catch((error) => res.send(error));
-            balance.kill('SIGKILL');
         });
 
         balance.send({ cmd: 'BALANCE' });

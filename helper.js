@@ -22,7 +22,6 @@ const postData = async (url, data) => {
             method: 'POST',
             body: JSON.stringify(data),
         });
-
         if (response.ok) {
             const jsonResponse = await response.json();
             return jsonResponse;
