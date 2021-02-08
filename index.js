@@ -488,7 +488,7 @@ class Client {
             console.log(`END: ${end}`);
 
             sticks = await this.getCandlestickData(sym, interval, start, end);
-            await sleep(1000);
+            await sleep(500);
 
             sticks.forEach((e) => {
                 data.push(e);
@@ -497,8 +497,8 @@ class Client {
             lastDateIteration = data[data.length - 1][6];
             console.log(`LASTITERATION: ${lastDateIteration}`);
         }
-        writeData(data, sym, interval, 'w');
-        return JSON.stringify(convertArrToJson(data));
+        writeData(convertArrToJson(data), sym, interval, 'w');
+        return convertArrToJson(data);
     }
 }
 

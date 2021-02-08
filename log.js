@@ -26,7 +26,7 @@ const convertArrToJson = (arr) => {
         };
         dataHolder.push(kline);
     }
-    return dataHolder;
+    return { ...dataHolder };
 };
 
 /**
@@ -38,9 +38,9 @@ const convertArrToJson = (arr) => {
  * @param {string} flag
  */
 const writeData = async (data, symbol, interval, flag) => {
-    const jsonString = JSON.stringify(convertArrToJson(await data));
+    const jsonString = JSON.stringify(data);
 
-    fs.writeFile(`./backtest/${symbol}_${interval}.json`, jsonString, { flag }, (err) => {
+    fs.writeFile(`${__dirname}/backtest/${symbol}_${interval}.json`, jsonString, { flag }, (err) => {
         if (err) {
             console.log('Error creating file.', err);
         } else {
