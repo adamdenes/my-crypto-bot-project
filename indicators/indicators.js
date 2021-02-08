@@ -2,17 +2,12 @@
 // Load the module and display its version
 const fs = require('fs');
 const talib = require('talib');
-const config = require('../config.json');
-const Client = require('../index');
-const { writeData } = require('../log');
-
-const client = new Client(config.apiKey, config.apiSecret);
 
 // console.log(`TALib Version: ${talib.version}`);
 
 // Retreive indicator specifications
-// const functionDesc = talib.explain('BBANDS');
-// console.dir(functionDesc);
+const functionDesc = talib.explain('BBANDS');
+console.dir(functionDesc);
 
 // marketData = { open: [...], close: [...], high: [...], low: [...], volume: [...] };
 const getMarketData = (json) => {
@@ -29,19 +24,23 @@ const getMarketData = (json) => {
             volume: Object.values(content).map((v) => v.volume),
         };
 
-        // execute SMA indicator function with time period 180
+        // execute indicator function
         talib.execute(
             {
-                name: 'SMA',
+                name: 'BBANDS',
+                inputs: [{ name: 'inReal', type: 'real' }],
                 startIdx: 0,
                 endIdx: marketData.close.length - 1,
                 inReal: marketData.close,
-                optInTimePeriod: 180,
+                optInTimePeriod: 20,
+                optInNbDevUp: 2,
+                optInNbDevDn: 2,
+                optInMAType: 0,
             },
             function (err, result) {
                 if (err) console.log(err);
                 // Show the result array
-                console.log('SMA Function Results:');
+                console.log('Function Results:');
                 console.log(result);
             }
         );
