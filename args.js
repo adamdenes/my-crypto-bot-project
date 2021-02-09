@@ -20,6 +20,9 @@ switch (myArgs[0].toLowerCase()) {
     case '-cs' || '--candelsticks':
         binance.downloadCandelSticks(myArgs[1], myArgs[2], myArgs[3]);
         break;
+    case '--current':
+        binance.getCandlestickData(myArgs[1], myArgs[2]);
+        break;
     case '-e':
         binance.exchangeInfo().then((r) => console.log(r));
         break;
