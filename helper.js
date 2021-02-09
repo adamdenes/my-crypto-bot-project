@@ -52,4 +52,29 @@ const killProc = () => {
     process.exit(0);
 };
 
-module.exports = { getData, postData, queryString, sleep, offset, killProc };
+const now = (time, interval) => {
+    // 1m: new Date() - (1000 * 60)
+    // 3m: new Date() - (1000 * 60 * 3)
+    // 5m: new Date() - (1000 * 60 * 5)
+    // 15m: new Date() - (1000 * 60 * 15)
+    // 1h: new Date() - (1000 * 60 * 60)
+    // 4h: new Date() - (1000 * 60 * 60 * 4)
+    // 1d: new Date() - (1000 * 60 * 60 * 24)
+    const number = interval.substring(0, interval.length - 1);
+    const letter = interval.substring(interval.length - 1);
+
+    switch (letter) {
+        case 'm':
+            return time - 1000 * 60 * parseInt(number);
+        case 'h':
+            return time - 1000 * 60 * 60 * parseInt(number);
+        case 'd':
+            return time - 1000 * 60 * 60 * 24 * parseInt(number);
+        case 'w':
+            return time - 1000 * 60 * 60 * 24 * 7 * parseInt(number);
+        default:
+            break;
+    }
+};
+
+module.exports = { getData, postData, queryString, sleep, offset, killProc, now };

@@ -5,7 +5,7 @@
 /* eslint-disable class-methods-use-this */
 const crypto = require('crypto');
 const fetch = require('node-fetch');
-const { queryString, sleep, offset } = require('./helper');
+const { queryString, sleep, offset, now } = require('./helper');
 const { logger, writeData, convertArrToJson } = require('./log');
 // const config = require('./config.json');
 
@@ -450,15 +450,22 @@ class Client {
         }
     }
 
-    async getCandlestickData(sym, interval, startTime, endTime) {
+    async getCandlestickData(sym, int, start, end) {
         try {
-            const query = queryString({
-                symbol: sym,
-                interval,
-                startTime,
-                endTime,
-            });
-
+            let query = null;
+            if (start === 'undefined' && end === 'undefined') {
+                query = queryString({
+                    symbol: sym,
+                    interval: int,
+                });
+            } else {
+                query = queryString({
+                    symbol: sym,
+                    interval: int,
+                    startTime: start,
+                    endTime: end,
+                });
+            }
             const response = await this.getRequest(`${this.base}api/v3/klines?${query}`, {
                 method: 'GET',
                 headers: {
@@ -466,6 +473,7 @@ class Client {
                     'Content-type': 'x-www-form-urlencoded',
                 },
             });
+            console.log(response.slice(-1)[0]);
             return response;
         } catch (error) {
             logger('KLINE', `GET getCandelsticData() failed => '${error}'`, 'error');
@@ -473,10 +481,13 @@ class Client {
     }
 
     async downloadCandelSticks(sym, interval, startTime) {
-        // get the current time 2 years back from now
-        const date = new Date();
-        const end =
-            Date.parse(new Date(date.getFullYear(), date.getMonth(), date.getDate() - 1, 24, 59, 59, 999)) + 999;
+        // last available closeprice
+        const lastClose = await this.getCandlestickData(sym, interval);
+        const end = now(lastClose.slice(-1)[0][6], interval);
+        // const end =  Date.parse(new Date(date.getFullYear(), date.getMonth(), date.getDate() - 1, 24, 59, 59, 999)) + 999;
+        console.log(end);
+        console.log(lastClose.slice(-1)[0][6]);
+
         let start = new Date().setFullYear(new Date().getFullYear() - startTime);
         let sticks = await this.getCandlestickData(sym, interval, start, end);
         const data = sticks.filter((e) => e[6] < end).map((e) => e);
@@ -486,7 +497,6 @@ class Client {
             start = lastDateIteration + 1;
             console.log(`STARTTIME: ${start}`);
             console.log(`END: ${end}`);
-
             sticks = await this.getCandlestickData(sym, interval, start, end);
             await sleep(500);
 
