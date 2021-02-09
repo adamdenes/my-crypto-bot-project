@@ -120,7 +120,7 @@ app.post('/hook', (req, res) => {
 
             const displayMsg = `<pre>----------------------\nSymbol  :   ${message.symbol}\nPrice   :   ${Number(
                 message.price
-            ).toFixed(2)}\nQuantity:   ${message.origQty}\nOrderId :   ${message.orderId}\nSide    :   ${
+            ).toFixed(8)}\nQuantity:   ${message.origQty}\nOrderId :   ${message.orderId}\nSide    :   ${
                 message.side
             }</pre>`.trim();
             testBot
