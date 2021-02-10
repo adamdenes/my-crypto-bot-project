@@ -62,6 +62,16 @@ class Client {
         return crypto.createHmac('sha256', this.apiSecret).update(query).digest('hex');
     }
 
+    async price(symbol) {
+        let response = null;
+        if (symbol === undefined) {
+            response = await this.getRequest(`${this.base}api/v3/ticker/price`);
+        } else {
+            response = await this.getRequest(`${this.base}api/v3/ticker/price?symbol=${symbol}`);
+        }
+        return response;
+    }
+
     async priceInUSD(cryptoPriceInQuote) {
         if (cryptoPriceInQuote.includes('USDT')) {
             const currentPrice = await this.getMarketPrice(cryptoPriceInQuote);
@@ -112,6 +122,7 @@ class Client {
     async postRequest(endpoint, data) {
         try {
             const response = await fetch(endpoint, data);
+            console.log(response)
             if (response.ok) {
                 const jsonResponse = await response.json();
                 return jsonResponse;

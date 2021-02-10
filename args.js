@@ -25,8 +25,11 @@ switch (myArgs[0].toLowerCase()) {
     case '-e':
         binance.exchangeInfo().then((r) => console.log(r));
         break;
-    case '-p':
+    case '--total':
         binance.priceInUSD(myArgs[1]).then((r) => console.log(r));
+        break;
+    case '-p':
+        binance.price(myArgs[1]).then((r) => console.log(r));
         break;
     case '--balance':
         binance.usdTotal().then((r) => console.log(`$${r.toFixed(2)}`));
