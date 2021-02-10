@@ -13,9 +13,9 @@ const convertArrToJson = (arr) => {
         const kline = {
             openTime: arr[i][0],
             open: arr[i][1],
-            close: arr[i][2],
-            high: arr[i][3],
-            low: arr[i][4],
+            high: arr[i][2],
+            low: arr[i][3],
+            close: arr[i][4],
             volume: arr[i][5],
             closeTime: arr[i][6],
             quoteAssetValue: arr[i][7],
