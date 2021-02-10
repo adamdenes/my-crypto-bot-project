@@ -1,6 +1,5 @@
 /* eslint-disable no-console */
 /* eslint-disable no-irregular-whitespace */
-const process = require('process');
 const config = require('./config.json');
 const Client = require('./index');
 const { sleep, killProc } = require('./helper');

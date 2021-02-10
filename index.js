@@ -473,7 +473,7 @@ class Client {
                     'Content-type': 'x-www-form-urlencoded',
                 },
             });
-            console.log(response.slice(-1)[0]);
+            // console.log(response.slice(-1)[0]);
             return response;
         } catch (error) {
             logger('KLINE', `GET getCandelsticData() failed => '${error}'`, 'error');
@@ -485,8 +485,6 @@ class Client {
         const lastClose = await this.getCandlestickData(sym, interval);
         const end = now(lastClose.slice(-1)[0][6], interval);
         // const end =  Date.parse(new Date(date.getFullYear(), date.getMonth(), date.getDate() - 1, 24, 59, 59, 999)) + 999;
-        console.log(end);
-        console.log(lastClose.slice(-1)[0][6]);
 
         let start = new Date().setFullYear(new Date().getFullYear() - startTime);
         let sticks = await this.getCandlestickData(sym, interval, start, end);

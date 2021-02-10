@@ -129,7 +129,7 @@ const logger = (operation, msg, severity) => {
     const timeInUTC = new Date();
     const localTime = `${timeInUTC.toISOString().split('T')[0]}T${timeInUTC.toLocaleTimeString()}`;
     const data = `${localTime} - [${severity.toUpperCase()}]: [${operation.toUpperCase()}] ${msg}`;
-    console.log(data);
+    // console.log(data);
     logToFile(data);
 };
 

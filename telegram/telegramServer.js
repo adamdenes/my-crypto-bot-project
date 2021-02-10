@@ -17,7 +17,7 @@ const testBot = new Bot(config.telegramToken, url);
 // testBot.getUpdates().then(r => console.log(r));
 // testBot.deleteWebhook(config.webhook);
 testBot.setWebhook(config.webhook);
-testBot.getWebhookInfo().then((r) => console.log(r));
+// testBot.getWebhookInfo().then((r) => console.log(r));
 let procPid = 0;
 
 app.use(bodyParser.json());
@@ -62,15 +62,15 @@ app.post('/hook', (req, res) => {
 
         // Start the application in a different process
         const start = fork(`${__dirname}/../main.js`, { silent: true });
-        // console.log(`Forked start process PID: ${start.pid}`);
+        console.log(`Forked start process PID: ${start.pid}`);
 
         start.on('exit', (code) => {
-            // console.log(`Child process 'START' exited with code ${code}`);
+            console.log(`Child process 'START' exited with code ${code}`);
             logger('PARENT', `Child process 'START' exited with code ${code}`, 'telegram');
         });
 
         start.on('message', (message) => {
-            // console.log(`PARENT: message from child: my PID is '${message}'`);
+            console.log(`PARENT: message from child: my PID is '${message}'`);
             logger('PARENT', `PARENT: message from child: my PID is '${message}'`, 'telegram');
             procPid = message;
         });
@@ -83,15 +83,15 @@ app.post('/hook', (req, res) => {
     } else if (msg.match(/\/stop/gi)) {
         // Stop the application in a different process
         const stop = fork(`${__dirname}/../main.js`, { silent: true });
-        // console.log(`Forked stop process PID: ${stop.pid}`);
+        console.log(`Forked stop process PID: ${stop.pid}`);
 
         stop.on('exit', (code) => {
-            // console.log(`Child process 'STOP' exited with code ${code}`);
+            console.log(`Child process 'STOP' exited with code ${code}`);
             logger('PARENT', `Child process 'STOP' exited with code ${code}`, 'telegram');
         });
 
         stop.on('message', (message) => {
-            // console.log(`PARENT: message from child: '${message}'`);
+            console.log(`PARENT: message from child: '${message}'`);
             logger('PARENT', `PARENT: message from child: '${message}'`, 'telegram');
         });
 
@@ -106,16 +106,16 @@ app.post('/hook', (req, res) => {
             .catch((error) => res.send(error));
     } else if (msg.match(/\/status/gi)) {
         const status = fork(`${__dirname}/../main.js`, { silent: true });
-        // console.log(`Forked status process PID: ${status.pid}`);
+        console.log(`Forked status process PID: ${status.pid}`);
 
         status.on('exit', (code) => {
-            // console.log(`Child process 'STATUS' exited with code ${code}`);
+            console.log(`Child process 'STATUS' exited with code ${code}`);
             logger('PARENT', `Child process 'STATUS' exited with code ${code}`, 'telegram');
         });
 
         status.on('message', (message) => {
             if (message === undefined) status.kill('SIGKILL');
-            // console.log(`PARENT: message from child: '${message.side}'`);
+            console.log(`PARENT: message from child: '${message.side}'`);
             logger('PARENT', `PARENT: message from child: '${message.side}'`, 'telegram');
 
             const displayMsg = `<pre>----------------------\nSymbol  :   ${message.symbol}\nPrice   :   ${Number(
@@ -136,15 +136,15 @@ app.post('/hook', (req, res) => {
         // });
     } else if (msg.match(/\/balance/gi)) {
         const balance = fork(`${__dirname}/../main.js`, { silent: true });
-        // console.log(`Forked balance process PID: ${balance.pid}`);
+        console.log(`Forked balance process PID: ${balance.pid}`);
 
         balance.on('exit', (code) => {
-            // console.log(`Child process 'BALANCE' exited with code ${code}`);
+            console.log(`Child process 'BALANCE' exited with code ${code}`);
             logger('PARENT', `Child process 'BALANCE' exited with code ${code}`, 'telegram');
         });
 
         balance.on('message', (message) => {
-            // console.log(`PARENT: message from child: '${message}'`);
+            console.log(`PARENT: message from child: '${message}'`);
             logger('PARENT', `PARENT: message from child: '${message}'`, 'telegram');
 
             const displayMsg = `Balance: $${Number(message).toFixed(2)}💰`;

@@ -1,5 +1,4 @@
 /* eslint-disable no-console */
-// Load the module and display its version
 const fs = require('fs');
 const talib = require('talib');
 
@@ -20,8 +19,9 @@ const getMarketData = (json) => {
         const marketData = {
             date: Object.values(content).map((d) => d.openTime),
             open: Object.values(content).map((o) => o.open),
-            close: Object.values(content).map((c) => c.close),
             high: Object.values(content).map((h) => h.high),
+            low: Object.values(content).map((l) => l.low),
+            close: Object.values(content).map((c) => c.close),
             volume: Object.values(content).map((v) => v.volume),
         };
 

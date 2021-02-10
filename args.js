@@ -1,5 +1,4 @@
 /* eslint-disable no-console */
-const process = require('process');
 const config = require('./config.json');
 const Client = require('./index');
 
@@ -21,7 +20,7 @@ switch (myArgs[0].toLowerCase()) {
         binance.downloadCandelSticks(myArgs[1], myArgs[2], myArgs[3]);
         break;
     case '--current':
-        binance.getCandlestickData(myArgs[1], myArgs[2]);
+        binance.getCandlestickData(myArgs[1], myArgs[2]).then((r) => console.log(r.slice(-1)[0]));
         break;
     case '-e':
         binance.exchangeInfo().then((r) => console.log(r));
