@@ -525,29 +525,14 @@ class Client {
             lastDateIteration = data[data.length - 1][6];
             console.log(`LASTITERATION: ${lastDateIteration}`);
         }
-        writeData(convertArrToJson(data), sym, interval, 'w');
-        return convertArrToJson(data);
+        // It is possible to get a full JSON format { open: 123, close: 456 }
+        // Or we can get an Array-like dataset
+
+        // writeData(convertArrToJson(data), sym, interval, 'w');
+        // return convertArrToJson(data);
+        writeData(data, sym, interval, 'w');
+        return data;
     }
 }
 
 module.exports = Client;
-
-// const client = new Client(config.apiKey, config.apiSecret);
-
-// ##################### TESTING CLASS METHODS #####################
-// writeData(client.getCandlestickData('ETHBTC', '1d', 2), 'ETHBTC', '1d', 'w');
-// client.downloadCandelSticks('ETHBTC', '1d', 2).then((mp) => console.log(mp));
-
-// client.cancelAllOrders('BTCUSDT').then((mp) => console.log(mp));
-// client.getCandlestickData('ETHBTC', '1d', 1612209599999, 1612223999999).then((mp) => console.log(mp));
-// client.getAccountInfo().then((mp) => console.log(mp));
-// client.exchangeInfo().then((mp) => console.log(mp));
-// client.getBalances().then((mp) => console.log(mp));
-// client.getMarketPrice('ETHBTC').then((mp) => console.log(mp));
-// client.testNewOrders().then((mp) => console.log(mp));
-// client.priceInUSD('ETHBTC').then((mp) => console.log(mp));
-
-// client.placeSellOrder('ETHBTC').then((mp) => console.log(mp));
-// client.placeBuyOrder('ETHBTC').then((mp) => console.log(mp));
-// client.cancelOrder(client.getOperationDetails()).then((mp) => console.log(mp));
-// client.getOperationDetails().then((mp) => console.log(mp));
