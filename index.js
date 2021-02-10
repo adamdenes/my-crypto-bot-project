@@ -72,6 +72,16 @@ class Client {
         return response;
     }
 
+    async bookTicker(symbol) {
+        let response = null;
+        if (symbol === undefined) {
+            response = await this.getRequest(`${this.base}api/v3/ticker/bookTicker`);
+        } else {
+            response = await this.getRequest(`${this.base}api/v3/ticker/bookTicker?symbol=${symbol}`);
+        }
+        return response;
+    }
+
     async priceInUSD(cryptoPriceInQuote) {
         if (cryptoPriceInQuote.includes('USDT')) {
             const currentPrice = await this.getMarketPrice(cryptoPriceInQuote);
@@ -122,7 +132,6 @@ class Client {
     async postRequest(endpoint, data) {
         try {
             const response = await fetch(endpoint, data);
-            console.log(response)
             if (response.ok) {
                 const jsonResponse = await response.json();
                 return jsonResponse;

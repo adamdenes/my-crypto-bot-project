@@ -31,6 +31,9 @@ switch (myArgs[0].toLowerCase()) {
     case '-p':
         binance.price(myArgs[1]).then((r) => console.log(r));
         break;
+    case '-bt' || '--bookticker':
+        binance.bookTicker(myArgs[1]).then((r) => console.log(r));
+        break;
     case '--balance':
         binance.usdTotal().then((r) => console.log(`$${r.toFixed(2)}`));
         break;
