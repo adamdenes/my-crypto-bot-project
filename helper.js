@@ -1,4 +1,5 @@
 /* eslint-disable no-console */
+const fs = require('fs');
 const fetch = require('node-fetch');
 
 // async ... await GET
@@ -77,4 +78,40 @@ const now = (time, interval) => {
     }
 };
 
-module.exports = { getData, postData, queryString, sleep, offset, killProc, now };
+const convertMarketData = (source) => {
+    // OHLCV data conversion + date
+    if (Array.isArray(source)) {
+        return {
+            time: source.map((t) => t[0]),
+            open: source.map((o) => o[1]),
+            high: source.map((h) => h[2]),
+            low: source.map((l) => l[3]),
+            close: source.map((c) => c[4]),
+            volume: source.map((v) => v[5]),
+        };
+    }
+    // For true Object converison in case convertArrToJson() is used!
+    return {
+        time: Object.values(source).map((t) => t.openTime),
+        open: Object.values(source).map((o) => o.open),
+        high: Object.values(source).map((h) => h.high),
+        low: Object.values(source).map((l) => l.low),
+        close: Object.values(source).map((c) => c.close),
+        volume: Object.values(source).map((v) => v.volume),
+    };
+};
+
+const readMarketData = async (json) => {
+    const fileContent = await new Promise((resolve, reject) =>
+        fs.readFile(json, (err, data) => {
+            if (err) {
+                return reject(err);
+            }
+            return resolve(data);
+        })
+    );
+    const content = JSON.parse(fileContent);
+    return convertMarketData(content);
+};
+
+module.exports = { getData, postData, queryString, sleep, offset, killProc, now, convertMarketData, readMarketData };
