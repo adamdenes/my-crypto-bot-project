@@ -9,8 +9,16 @@ const { sleep, killProc, convertMarketData } = require('./helper');
 const MyTestStrategy = require('./strategies/bollinger');
 const Client = require('./index');
 
-const binance = new Client(config.apiKey, config.apiSecret);
+let binance = null;
 const bbrsi = new MyTestStrategy();
+
+if (config.testnet) {
+    binance = new Client(config.testnetApiKey, config.testnetSecret);
+    binance.base = 'https://testnet.binance.vision/';
+    logger('TESTNET', `Instance running with dry-run enabled`, 'info');
+} else {
+    binance = new Client(config.apiKey, config.apiSecret);
+}
 
 const { pid } = process;
 
@@ -44,10 +52,6 @@ const attemptToMakeTrade = async () => {
     } else {
         lastOpPrice = config.lastPrice;
     }
-
-    // console.log(lastOpPrice);
-    // const percentageDiff = ((Number(marketData.close.slice(-1)[0]) - Number(lastOpPrice)) / Number(lastOpPrice)) * 100;
-    // console.log(percentageDiff);
 
     if (openTrades.length > 0) {
         logger('SYSTEM', `There is an open order... orderId: ${openTrades[0].orderId}`, 'info');

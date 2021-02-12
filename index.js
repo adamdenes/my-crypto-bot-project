@@ -5,9 +5,8 @@
 /* eslint-disable class-methods-use-this */
 const crypto = require('crypto');
 const fetch = require('node-fetch');
+const { logger, writeData } = require('./log');
 const { queryString, sleep, offset, now } = require('./helper');
-const { logger, writeData, convertArrToJson } = require('./log');
-// const config = require('./config.json');
 
 class Client {
     constructor(apiKey, apiSecret) {
@@ -78,6 +77,16 @@ class Client {
             response = await this.getRequest(`${this.base}api/v3/ticker/bookTicker`);
         } else {
             response = await this.getRequest(`${this.base}api/v3/ticker/bookTicker?symbol=${symbol}`);
+        }
+        return response;
+    }
+
+    async ticker24hr(symbol) {
+        let response = null;
+        if (symbol === undefined) {
+            response = await this.getRequest(`${this.base}api/v3/ticker/24hr`);
+        } else {
+            response = await this.getRequest(`${this.base}api/v3/ticker/24hr?symbol=${symbol}`);
         }
         return response;
     }
