@@ -12,7 +12,7 @@ const Client = require('./index');
 let binance = null;
 const bbrsi = new MyTestStrategy();
 
-if (config.testnet) {
+if (config.testnet === true) {
     binance = new Client(config.testnetApiKey, config.testnetSecret);
     binance.base = 'https://testnet.binance.vision/';
     logger('TESTNET', `Instance running with dry-run enabled`, 'info');
@@ -86,7 +86,7 @@ const startBot = async () => {
             // logger('SYSTEM', `Looking for trade...`, 'info');
             await attemptToMakeTrade();
             // logger('SYSTEM', `Sleeping for 30 sec...`, 'info');
-            await sleep(2000);
+            await sleep(5000);
         } catch (critical) {
             logger('SYSTEM', `BOT failed, FATAL ERROR => '${critical}'`, 'CRITICAL');
         }

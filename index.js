@@ -522,17 +522,17 @@ class Client {
 
         while (lastDateIteration < end) {
             start = lastDateIteration + 1;
-            console.log(`STARTTIME: ${start}`);
-            console.log(`END: ${end}`);
+            console.log(`STARTTIME: \t${start}`);
+            console.log(`END: \t\t${end}`);
             sticks = await this.getCandlestickData(sym, interval, start, end);
             await sleep(500);
 
             sticks.forEach((e) => {
                 data.push(e);
             });
-            console.log(`DATA-LENGTH: ${data.length}`);
+            console.log(`DATA-LENGTH: \t${data.length}`);
             lastDateIteration = data[data.length - 1][6];
-            console.log(`LASTITERATION: ${lastDateIteration}`);
+            console.log(`LASTITERATION: \t${lastDateIteration}`);
         }
         // It is possible to get a full JSON format { open: 123, close: 456 }
         // Or we can get an Array-like dataset
@@ -541,6 +541,17 @@ class Client {
         // return convertArrToJson(data);
         writeData(data, sym, interval, 'w');
         return data;
+    }
+
+    async listenKey() {
+        const response = await this.postRequest(`${this.base}api/v3/userDataStream`, {
+            method: 'POST',
+            headers: {
+                'X-MBX-APIKEY': this.apiKey,
+                'Content-type': 'x-www-form-urlencoded',
+            },
+        });
+        return response;
     }
 }
 
