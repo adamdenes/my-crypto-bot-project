@@ -40,6 +40,9 @@ switch (myArgs[0].toLowerCase()) {
     case '-b':
         binance.getBalances().then((r) => console.log(r));
         break;
+    case '-lk':
+        binance.listenKey().then((r) => console.log(r));
+        break;
     default:
         break;
 }
