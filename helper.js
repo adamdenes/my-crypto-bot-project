@@ -92,12 +92,12 @@ const convertMarketData = (source) => {
     }
     // For true Object converison in case convertArrToJson() is used!
     return {
-        time: Object.values(source).map((t) => t.openTime),
-        open: Object.values(source).map((o) => o.open),
-        high: Object.values(source).map((h) => h.high),
-        low: Object.values(source).map((l) => l.low),
-        close: Object.values(source).map((c) => c.close),
-        volume: Object.values(source).map((v) => v.volume),
+        time: Object.values(source).map((t) => (t.openTime ? t.openTime : t.O)),
+        open: Object.values(source).map((o) => (o.open ? o.open : o.o)),
+        high: Object.values(source).map((h) => (h.high ? h.high : h.h)),
+        low: Object.values(source).map((l) => (l.low ? l.low : l.l)),
+        close: Object.values(source).map((c) => (c.close ? c.close : c.c)),
+        volume: Object.values(source).map((v) => (v.volume ? v.volume : v.v)),
     };
 };
 
