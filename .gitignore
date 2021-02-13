@@ -1,6 +1,7 @@
 node_modules
 package*
-bot2*
+logs/*
 config.json
 .eslintrc
-backtest
+backtest/*
+!*/backtest.js
