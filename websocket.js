@@ -124,7 +124,7 @@ class WebSocket {
 
             // Need to recreate the websocket object
             setTimeout(() => {
-                logger('WEBSOCKET', `RECONNECTING after connection loss.`, 'info');
+                logger('WEBSOCKET', `RECONNECTING after connection loss.`, 'CRITICAL');
                 this.startWS();
             }, this.reconnect);
         });
