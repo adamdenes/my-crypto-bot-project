@@ -84,7 +84,7 @@ class WebSocket {
 
         this.ws.on('ping', (data) => {
             // console.log(`PING --> ${data}`);
-            // logger('WEBSOCKET', `PING --> ${data}`, 'info');
+            logger('WEBSOCKET', `PING --> ${data}`, 'info');
         });
 
         this.ws.on('pong', () => {
