@@ -1,13 +1,12 @@
 const Websocket = require('ws');
 const { logger } = require('./log');
-const { convertMarketData } = require('./helper');
 
 class WebSocket {
     constructor(protocol, stream, payload = { method: 'SUBSCRIBE', params: ['ethbtc@ticker'], id: 1 }) {
         this.protocol = protocol;
         this.stream = stream;
         this._payload = payload;
-        this.reconnect = this.randomDelay(); // 1000-4000
+        this._reconnect = this.randomDelay(); // 1000-4000
         this.ws = null;
         this.marketData = null;
     }
@@ -68,7 +67,7 @@ class WebSocket {
         this.ws = new Websocket(`${this.protocol}://${this.stream}/stream?`);
         this.eventListener();
         // console.log(`reconnect interval: ${this.reconnect}`);
-        this.reconnect = this.randomDelay() + 250;
+        this._reconnect = this.randomDelay() + 250;
     }
 
     eventListener() {
@@ -101,14 +100,8 @@ class WebSocket {
                 convertedData[objKey] = dataObj[objKey];
 
                 if (dataObj.stream === this._payload.params[0]) {
-                    this._marketData = convertMarketData(convertedData);
-                    // console.log(`TICKER --> Time: \t${ohlcv.time}`);
-                    // console.log(`TICKER --> Open: \t${ohlcv.open}`);
-                    // console.log(`TICKER --> High: \t${ohlcv.high}`);
-                    // console.log(`TICKER --> Low: \t${ohlcv.low}`);
-                    // console.log(`TICKER --> Close: \t${ohlcv.close}`);
-                    // console.log(`TICKER --> Volume: \t${ohlcv.volume}`);
-                    // console.log('$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$');
+                    this.marketData = convertedData;
+                    // logger('WEBSOCKET', `${this.marketData}`, 'debug');
                 }
             }
         });
@@ -126,7 +119,7 @@ class WebSocket {
             setTimeout(() => {
                 logger('WEBSOCKET', `RECONNECTING after connection loss.`, 'CRITICAL');
                 this.startWS();
-            }, this.reconnect);
+            }, this._reconnect);
         });
     }
 }
