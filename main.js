@@ -6,11 +6,16 @@ const { BBANDS, RSI } = require('./indicators/indicators');
 const { sleep, killProc, convertMarketData } = require('./helper');
 
 // Classes
-const MyTestStrategy = require('./strategies/bollinger');
 const Client = require('./index');
+const MyTestStrategy = require('./strategies/bollinger');
+// const WebSocket = require('./websocket');
 
 let binance = null;
 const bbrsi = new MyTestStrategy();
+// const ws = new WebSocket('wss', 'stream.binance.com:9443');
+
+const { pid } = process;
+let lastOpPrice = config.lastPrice;
 
 if (config.testnet === true) {
     binance = new Client(config.testnetApiKey, config.testnetSecret);
@@ -20,17 +25,19 @@ if (config.testnet === true) {
     binance = new Client(config.apiKey, config.apiSecret);
 }
 
-const { pid } = process;
+const tryToBuy = () => {
+    lastOpPrice = binance.placeBuyOrder('ETHBTC');
+    return lastOpPrice;
+};
 
-// let isNextOperationBuy = binance.operation.BUY;
-let lastOpPrice = config.lastPrice;
-
-const tryToBuy = () => binance.placeBuyOrder('ETHBTC');
-const tryToSell = () => binance.placeSellOrder('ETHBTC');
+const tryToSell = () => {
+    lastOpPrice = binance.placeSellOrder('ETHBTC');
+    return lastOpPrice;
+};
 
 const attemptToMakeTrade = async () => {
     const promises = await Promise.all([
-        binance.getOperationDetails(),
+        binance.getOperationDetails('ETHBTC'),
         binance.priceInUSD('ETHBTC'),
         binance.getCandlestickData('ETHBTC', '4h'),
     ]);
@@ -38,12 +45,13 @@ const attemptToMakeTrade = async () => {
     const usdPrice = promises[1];
     const marketData = convertMarketData(promises[2]);
     bbrsi.dataset = marketData;
-    // console.log(usdPrice);
-    // console.log(marketData.close.slice(-1));
 
-    // Set indicators
+    // Empty indicators and set them
+    bbrsi.indicators = [];
     bbrsi.populateIndicators(BBANDS(bbrsi.dataset));
     bbrsi.populateIndicators(RSI(bbrsi.dataset));
+    const buySignal = bbrsi.generateBuySignal();
+    const sellSignal = bbrsi.generateSellSignal();
 
     // TODO: check if this is still necessary
     if (Promise.resolve(lastOpPrice)) {
@@ -57,16 +65,14 @@ const attemptToMakeTrade = async () => {
         logger('SYSTEM', `There is an open order... orderId: ${openTrades[0].orderId}`, 'info');
         logger('SYSTEM', `Recheck trades...`, 'info');
         logger('SYSTEM', `NUMBER OF OPEN TRADES : ${openTrades.length}`, 'info');
-    }
-    console.log('Looking for signals');
-    if (bbrsi.generateBuySignal()) {
+    } else if (buySignal) {
         tryToBuy();
         logger(
             'TRY-TO-BUY',
             `lastOpPrice => '${await lastOpPrice} = $${((await lastOpPrice) * usdPrice).toFixed(2)}'`,
             'INFO'
         );
-    } else if (bbrsi.generateSellSignal()) {
+    } else if (sellSignal) {
         tryToSell();
         logger(
             'TRY-TO-SELL',
@@ -74,7 +80,7 @@ const attemptToMakeTrade = async () => {
             'INFO'
         );
     } else {
-        // logger('SYSTEM', 'Buy and Sell signals have returned false', 'INFO');
+        logger('SYSTEM', 'Buy and Sell signals have returned false', 'INFO');
     }
 };
 
@@ -86,7 +92,7 @@ const startBot = async () => {
             // logger('SYSTEM', `Looking for trade...`, 'info');
             await attemptToMakeTrade();
             // logger('SYSTEM', `Sleeping for 30 sec...`, 'info');
-            await sleep(5000);
+            await sleep(10000);
         } catch (critical) {
             logger('SYSTEM', `BOT failed, FATAL ERROR => '${critical}'`, 'CRITICAL');
         }
@@ -107,7 +113,7 @@ const stopBot = async (proc) => {
 };
 
 process.on('message', (message) => {
-    console.log(`CHILD: message from parent: ${message.cmd}`);
+    // console.log(`CHILD: message from parent: ${message.cmd}`);
     logger('CHILD', `CHILD: message from parent: ${message.cmd}`, 'telegram');
 
     if (message.cmd === 'START') {
