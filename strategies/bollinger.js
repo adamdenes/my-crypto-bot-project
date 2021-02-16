@@ -81,8 +81,8 @@ class MyTestStrategy {
         const relativeSI = ti.next().value.result;
 
         // const upperBand = bollinger.outRealUpperBand; // .outRealUpperBand;
-        const middleBand = bollinger.outRealMiddleBand; // .outRealMiddleBand;
-        // const lowerBand = bollinger.outRealLowerBand; // .outRealLowerBand;
+        // const middleBand = bollinger.outRealMiddleBand; // .outRealMiddleBand;
+        const lowerBand = bollinger.outRealLowerBand; // .outRealLowerBand;
         const rsi = relativeSI.outReal; // .outReal;
 
         // console.log(`BUY-SIGNAL | RSI: ${rsi.slice(-1)[0]} > 30 -> ${rsi.slice(-1)[0] > 30}`);
@@ -97,17 +97,17 @@ class MyTestStrategy {
         logger('BUY-SIGNAL', `RSI: ${rsi.slice(-1)[0]} > 30 -> ${rsi.slice(-1)[0] > 30}`, 'debug');
         logger(
             'BUY-SIGNAL',
-            `Close: ${data.close.slice(-1)[0]} < BB lower: ${middleBand.slice(-1)[0]} -> ${
-                data.close.slice(-1)[0] < middleBand.slice(-1)[0]
+            `Close: ${data.close.slice(-1)[0]} < BB lower: ${lowerBand.slice(-1)[0]} -> ${
+                data.close.slice(-1)[0] < lowerBand.slice(-1)[0]
             }`,
             'debug'
         );
         logger(
             'BUY-SIGNAL',
-            `overall ${rsi.slice(-1)[0] > 30 && data.close.slice(-1)[0] < middleBand.slice(-1)[0]}`,
+            `overall ${rsi.slice(-1)[0] > 30 && data.close.slice(-1)[0] < lowerBand.slice(-1)[0]}`,
             'debug'
         );
-        return rsi.slice(-1)[0] > 30 && data.close.slice(-1)[0] < middleBand.slice(-1)[0];
+        return rsi.slice(-1)[0] > 30 && data.close.slice(-1)[0] < lowerBand.slice(-1)[0];
         // const df = this.createDataFrame();
         // let buy = df.select('outReal', 'outRealLowerBand', 'close', 'time');
         // buy = buy
