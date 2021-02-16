@@ -1,3 +1,4 @@
+/* eslint-disable object-shorthand */
 /* eslint-disable prefer-destructuring */
 /* eslint-disable no-plusplus */
 /* eslint-disable no-console */
@@ -411,6 +412,29 @@ class Client {
         }
     }
 
+    async queryOrder(sym = 'ETHBTC', orderId) {
+        try {
+            const serverTime = await this.adjustTimestamp(this.getServerTime());
+            const query = queryString({
+                symbol: sym,
+                orderId: orderId,
+                recvWindow: 5000,
+                timestamp: serverTime,
+            });
+            const sig = this.signature(query);
+            const response = await this.getRequest(`${this.base}api/v3/order?${query}&signature=${sig}`, {
+                method: 'GET',
+                headers: {
+                    'X-MBX-APIKEY': this.apiKey,
+                    'Content-type': 'x-www-form-urlencoded',
+                },
+            });
+            return response;
+        } catch (error) {
+            logger('BALANCES', `GET queryOrder() failed => '${error}'`, 'error');
+        }
+    }
+
     async cancelOrder(operation) {
         try {
             const openOrders = await operation;
@@ -459,10 +483,10 @@ class Client {
         }
     }
 
-    async getOperationDetails() {
+    async getOperationDetails(sym = 'ETHBTC') {
         try {
             const serverTime = await this.adjustTimestamp(this.getServerTime());
-            const query = queryString({ recvWindow: 5000, timestamp: serverTime });
+            const query = queryString({ symbol: sym, recvWindow: 5000, timestamp: serverTime });
             const sig = this.signature(query);
 
             const response = await this.getRequest(`${this.base}api/v3/openOrders?${query}&signature=${sig}`, {
