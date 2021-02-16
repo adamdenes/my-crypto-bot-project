@@ -43,6 +43,9 @@ switch (myArgs[0].toLowerCase()) {
     case '-lk':
         binance.listenKey().then((r) => console.log(r));
         break;
+    case '-qo':
+        binance.queryOrder(myArgs[1], myArgs[2]).then((r) => console.log(r));
+        break;
     default:
         break;
 }
