@@ -23,7 +23,13 @@ switch (myArgs[0].toLowerCase()) {
         binance.getCandlestickData(myArgs[1], myArgs[2]).then((r) => console.log(r.slice(-1)[0]));
         break;
     case '-e':
-        binance.exchangeInfo().then((r) => console.log(r));
+        binance.exchangeInfo().then((r) => {
+            r.symbols.forEach((element) => {
+                if (element.symbol === myArgs[1]) {
+                    console.log(element);
+                }
+            });
+        });
         break;
     case '--total':
         binance.priceInUSD(myArgs[1]).then((r) => console.log(r));
@@ -45,6 +51,15 @@ switch (myArgs[0].toLowerCase()) {
         break;
     case '-qo':
         binance.queryOrder(myArgs[1], myArgs[2]).then((r) => console.log(r));
+        break;
+    case '-oco':
+        binance.placeOCO(myArgs[1], myArgs[2]).then((r) => console.log(r));
+        break;
+    case '-buy':
+        binance.placeBuyOrder().then((r) => console.log(r));
+        break;
+    case '-min':
+        binance.minQuantity(binance.exchangeInfo(), myArgs[1]).then((r) => console.log(r));
         break;
     default:
         break;

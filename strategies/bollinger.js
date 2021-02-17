@@ -87,12 +87,12 @@ class MyTestStrategy {
 
         // console.log(`BUY-SIGNAL | RSI: ${rsi.slice(-1)[0]} > 30 -> ${rsi.slice(-1)[0] > 30}`);
         // console.log(
-        //     `BUY-SIGNAL | Close: ${data.close.slice(-1)[0]} < BB lower: ${middleBand.slice(-1)[0]} -> ${
-        //         data.close.slice(-1)[0] < middleBand.slice(-1)[0]
+        //     `BUY-SIGNAL | Close: ${data.close.slice(-1)[0]} < BB lower: ${lowerBand.slice(-1)[0]} -> ${
+        //         data.close.slice(-1)[0] < lowerBand.slice(-1)[0]
         //     }`
         // );
         // console.log(
-        //     `BUY-SIGNAL | overall ${rsi.slice(-1)[0] > 30 && data.close.slice(-1)[0] < middleBand.slice(-1)[0]}`
+        //     `BUY-SIGNAL | overall ${rsi.slice(-1)[0] > 30 && data.close.slice(-1)[0] < lowerBand.slice(-1)[0]}`
         // );
         logger('BUY-SIGNAL', `RSI: ${rsi.slice(-1)[0]} > 30 -> ${rsi.slice(-1)[0] > 30}`, 'debug');
         logger(

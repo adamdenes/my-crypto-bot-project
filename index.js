@@ -148,6 +148,7 @@ class Client {
             }
             throw new Error('Request failed!');
         } catch (error) {
+            console.log(error);
             logger('POST', `POST request failed ${error}`, 'error');
         }
     }
@@ -173,9 +174,9 @@ class Client {
         for (let i = 0; i < info.symbols.length; i++) {
             if (info.symbols[i].symbol.includes(sym)) {
                 for (let j = 0; j < info.symbols[i].filters.length; j++) {
-                    if (info.symbols[i].filters[j].filterType === 'LOT_SIZE') {
+                    if (info.symbols[i].filters[j].filterType === 'MIN_NOTIONAL') {
                         // console.log(info.symbols[i].filters[j]);
-                        minQuantity = info.symbols[i].filters[j].minQty;
+                        minQuantity = info.symbols[i].filters[j].minNotional;
                     }
                 }
             }
@@ -576,6 +577,81 @@ class Client {
             },
         });
         return response;
+    }
+
+    async placeOCO(sym = 'ETHBTC', sell = 'SELL', tif = 'GTC') {
+        logger('OCO-ORDER', `Attempt to sell: ${sym}`, 'info');
+
+        try {
+            const priceInfo = await Promise.all([
+                this.priceInUSD(sym),
+                this.getBalances(),
+                this.getMarketPrice(sym),
+                this.adjustTimestamp(this.getServerTime()),
+                this.minQuantity(this.exchangeInfo(), sym),
+            ]);
+
+            const freeCrypto = +priceInfo[1][1].free;
+            const marketPrice = +priceInfo[2].price;
+            const serverTime = priceInfo[3];
+            const pt = (+marketPrice + marketPrice * this.operation.SELL_PROFIT_THRESHOLD).toFixed(6);
+            const sl = (+marketPrice - marketPrice * this.operation.SELL_STOP_LOSS_THRESHOLD).toFixed(6);
+            const priceQuantity = +(freeCrypto * 0.02).toFixed(3) * marketPrice;
+            let quant = +(freeCrypto * 0.02).toFixed(3);
+            const minQty = priceInfo[4];
+            if (priceQuantity > freeCrypto) {
+                console.log('OCO-ORDER', `Insufficient balance : ${freeCrypto}`, 'CRITICAL');
+                // logger('OCO-ORDER', `Insufficient balance : ${freeCrypto}`, 'CRITICAL');
+            }
+
+            if (priceQuantity < minQty) {
+                console.log('OCO-ORDER', `Minimun quantity not reached : ${minQty}`, 'CRITICAL');
+                console.log('OCO-ORDER', `Setting minQuant to : ${minQty}`, 'CRITICAL');
+                quant = +minQty;
+            }
+            console.log(freeCrypto);
+            console.log(marketPrice);
+            console.log(serverTime);
+            console.log(pt);
+            console.log(sl);
+            console.log(priceQuantity);
+            console.log(quant);
+            console.log(minQty);
+
+            this.order = {
+                symbol: sym,
+                side: sell,
+                type: 'OCO',
+                quantity: quant,
+                price: +pt,
+                stopPrice: +sl,
+                stopLimitPrice: +sl,
+                stopLimitTimeInForce: tif,
+                recvWindow: 5000,
+                timestamp: serverTime,
+            };
+            const query = queryString(this.order);
+            const sig = this.signature(query);
+
+            const response = await this.postRequest(`${this.base}api/v3/order/oco?${query}&signature=${sig}`, {
+                method: 'POST',
+                headers: {
+                    'X-MBX-APIKEY': this.apiKey,
+                    'Content-type': 'x-www-form-urlencoded',
+                },
+            });
+            // logger(
+            //     'OCO-ORDER',
+            //     `GET placeSellOrder() success, SELL price => '${response.price} = $${(
+            //         response.price * priceInfo[0]
+            //     ).toFixed(2)}'`,
+            //     'warning'
+            // );
+            return response.price;
+        } catch (error) {
+            console.log('OCO-ORDER', `GET placeOCO() failed => '${error}'`, 'error');
+            // logger('OCO-ORDER', `GET placeOCO() failed => '${error}'`, 'error');
+        }
     }
 }
 
